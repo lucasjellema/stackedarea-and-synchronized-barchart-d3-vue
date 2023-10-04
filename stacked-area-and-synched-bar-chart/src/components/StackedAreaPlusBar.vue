@@ -5,6 +5,7 @@ export default {
     props: {
         countries: Array
     },
+    emits: ['bar-clicked'],
     mounted() {
         this.createBarChart();
     },
@@ -298,7 +299,12 @@ export default {
                 .attr('y', (d) => barYScale(d.value))
                 .attr('width', barXScale.bandwidth())
                 .attr('height', (d) => barHeight - barYScale(d.value))
-                .attr('fill', (d, i) => d3.schemeCategory10[i]);
+                .attr('fill', (d, i) => d3.schemeCategory10[i])
+                .on('click', (d, i) => {
+                    // Emit a custom event when a bar is clicked
+                    this.$emit('bar-clicked', { value: d, index: i });
+                })
+                ;
             // Add x and y axes for the bar chart
             const barXAxis = d3.axisBottom(barXScale);
             const barYAxis = d3.axisLeft(barYScale);

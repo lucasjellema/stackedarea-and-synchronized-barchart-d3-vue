@@ -9,6 +9,10 @@ function handleButtonClick(collboaratingCountries) {
   countries.value = collboaratingCountries
 }
 
+function handleBarClick(eventData) {
+      console.log('Bar Clicked:', eventData);
+      // You can handle the bar click event here
+    }
 </script>
 
 <template>
@@ -18,7 +22,7 @@ function handleButtonClick(collboaratingCountries) {
     <button @click="handleButtonClick(['Germany','The Netherlands'])">Collaborate Germany and Netherlands</button>
     <button @click="handleButtonClick(['USA','Canada','Mexico'])">Collaborate USA, Canada, Mexico</button>
     <div>
-    <StackedAreaPlusBar :countries=countries />
+    <StackedAreaPlusBar :countries=countries @bar-clicked="handleBarClick"/>
     </div>
   </div>
 </template>
