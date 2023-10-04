@@ -88,12 +88,12 @@ export default {
 
                     var x = coordinates[0];
                     var y = coordinates[1];
-                    const xValue = xValueFromMouse(x); 
+                    const xValue = xValueFromMouse(x);
                     const yValue = yValueFromMouse(y);
-                    tooltipText= `${tooltipText}: Reductions: ${xValue}` 
+                    tooltipText = `${tooltipText}: Reductions: ${xValue}`
                     tooltip.text(tooltipText);
 
-                    
+
                     return tooltip.style("visibility", "visible");
                 })
                 .on("mousemove", function (event, d) {
@@ -102,16 +102,16 @@ export default {
 
                     var x = coordinates[0];
                     var y = coordinates[1];
-                    // find the X value for the selected series
-                    const xValue = xValueFromMouse(x); 
+
+                    const xValue = xValueFromMouse(x);
                     // find the Y value for the selected series
-                    const yValue = yValueFromMouse(y);
-                    tooltipText= `${tooltipText}: Reductions: ${xValue.toFixed(2)} Cost: ${yValue.toFixed(2)}` 
+                    const yValue = findYforXinSerie(d.key, xValue);
+                    tooltipText = `${tooltipText}: Reductions: ${xValue.toFixed(2)} Cost: ${yValue.toFixed(2)}`
                     tooltip.text(tooltipText);
 
-  
 
-                    return tooltip.style("top", (y + 50 + margin.top ) + "px").style("left", (x + 10) + "px");
+
+                    return tooltip.style("top", (y + 50 + margin.top) + "px").style("left", (x + 10) + "px");
                 })
                 .on("mouseout", function () { return tooltip.style("visibility", "hidden"); })
                 .on('click', function (event, d) {
@@ -443,6 +443,48 @@ const data = [
         wonderstuff: 1,
     },
 ];
+
+function findYforXinSerie(serie, xValue) {
+    // x0: find largest X in serie that is smaller than or equal to xValue
+    // Initialize variables to keep track of the largest x and the corresponding object
+    let largestX = -Infinity; // Initialize to negative infinity so that any x value is greater
+    let largestXObject = null;
+
+    // Iterate through the array of objects
+    for (const obj of data) {
+        // Check if the current object's x property is smaller than P and larger than the largestX found so far
+        if (obj.x < xValue && obj.x > largestX) {
+            largestX = obj.x; // Update the largestX
+            largestXObject = obj; // Update the corresponding object
+        }
+    }
+    console.log(`largest smaller ${JSON.stringify(largestXObject[serie])} for x = ${largestX}`)
+
+
+
+    // x1: find smallest X in serie that is larger than xValue
+
+    let smallestX = Infinity; // Initialize to negative infinity so that any x value is greater
+    let smallestXObject = null;
+
+    // Iterate through the array of objects
+    for (const obj of data) {
+        // Check if the current object's x property is smaller than P and larger than the largestX found so far
+        if (obj.x > xValue && obj.x < smallestX) {
+            smallestX = obj.x;
+            smallestXObject = obj; // Update the corresponding object
+        }
+    }
+    console.log(`smallest larger ${JSON.stringify(smallestXObject[serie])} for x = ${smallestX}`)
+
+    // get the cost values for for these two: y0 and y1
+    const y0 = largestXObject[serie]
+    const y1 = smallestXObject[serie]
+
+    // interpolate: return y0 + (x-x0/x1-x0) * (y1-y0)
+    const interpolatedValue = y0 + y1 * (xValue - largestX) / (smallestX - largestX)
+    return interpolatedValue;
+}
 
 // Sample data for the bar chart
 const barData = [
