@@ -24,7 +24,13 @@ export default {
                 .append('g')
                 .attr('transform', `translate(${margin.left},${margin.top})`);
 
-
+            var tooltip = d3.select("body")
+                .append("div")
+                .attr('class', 'popup-container')
+                .style("position", "absolute")
+                .style("z-index", "10")
+                .style("visibility", "hidden")
+                .text("");
             // Create a color scale for the series
             const color = d3
                 .scaleOrdinal()
@@ -76,6 +82,38 @@ export default {
                 .attr('class', 'area')
                 .attr('fill', (d) => color(d.key))
                 .attr('d', area)
+                .on("mouseover", function (event, d) {
+                    let tooltipText = `Technology:  ${d.key}`;
+                    var coordinates = d3.pointer(event);
+
+                    var x = coordinates[0];
+                    var y = coordinates[1];
+                    const xValue = xValueFromMouse(x); 
+                    const yValue = yValueFromMouse(y);
+                    tooltipText= `${tooltipText}: Reductions: ${xValue}` 
+                    tooltip.text(tooltipText);
+
+                    
+                    return tooltip.style("visibility", "visible");
+                })
+                .on("mousemove", function (event, d) {
+                    let tooltipText = `Technology:  ${d.key}`;
+                    var coordinates = d3.pointer(event);
+
+                    var x = coordinates[0];
+                    var y = coordinates[1];
+                    // find the X value for the selected series
+                    const xValue = xValueFromMouse(x); 
+                    // find the Y value for the selected series
+                    const yValue = yValueFromMouse(y);
+                    tooltipText= `${tooltipText}: Reductions: ${xValue.toFixed(2)} Cost: ${yValue.toFixed(2)}` 
+                    tooltip.text(tooltipText);
+
+  
+
+                    return tooltip.style("top", (y + 50 + margin.top ) + "px").style("left", (x + 10) + "px");
+                })
+                .on("mouseout", function () { return tooltip.style("visibility", "hidden"); })
                 .on('click', function (event, d) {
                     var coordinates = d3.pointer(event);
                     var x = coordinates[0];
@@ -423,7 +461,10 @@ const barData = [
     Stacked Area Chart for {{ countries }}
 
     <!-- Create a container for the chart -->
-    <div id="chart"></div>
+    <div id="chart">
+
+
+    </div>
     <!-- Create a container for the bar chart -->
     <div id="bar-chart"></div>
 </template>
@@ -450,5 +491,14 @@ const barData = [
 .marker {
     cursor: pointer;
     fill: red;
+}
+
+
+.popup-container {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Add other styling properties as needed */
 }
 </style>
