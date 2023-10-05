@@ -49,7 +49,7 @@ export default {
 
             const yScale = d3
                 .scaleLinear()
-                .domain([0, d3.max(data, (d) => d3.sum(Object.values(d).slice(1)))])
+                .domain([0, d3.max(data, (d) => d.sum)])
                 .range([height, 0]);
 
             function yValueFromMouse(mouseY) {
@@ -58,7 +58,7 @@ export default {
             // Create a stack generator
             const stack = d3
                 .stack()
-                .keys(Object.keys(data[0]).filter((key) => key !== 'x'))
+                .keys(Object.keys(data[0]).filter((key) => key !== 'x' && key !== 'sum'))
                 .order(d3.stackOrderNone)
                 .offset(d3.stackOffsetNone);
 
@@ -122,19 +122,14 @@ export default {
                     const series = d.key;
 
                     // Log or display the information as needed
-                    console.log(`Clicked on x: ${x}, y: ${y}`);
+                   
 
                     const xCoordToFind = xValueFromMouse(x); // Replace with the desired x-coordinate - translate mouse x to value on x-axis
                     const yValue = yValueFromMouse(y);
 
-                    console.log(
-                        `x value for click is ${xCoordToFind}, y value at click point = ${yValue}`
-                    );
+
                     const valuesAtX = findValuesAtX(xCoordToFind, data);
-                    console.log(
-                        `Values at x=${xCoordToFind}:`,
-                        JSON.stringify(valuesAtX)
-                    );
+  
                     console.log(`Clicked on series: ${series}`);
 
                     const updatedBarData = [
@@ -267,6 +262,49 @@ export default {
                 x = Math.max(0, Math.min(width - 20, x)); // Limit the marker within the SVG
                 d3.select(this).attr('y', y); // Move marker
                 horizontalLine.attr('y1', y + 10).attr('y2', y + 10); // Move line
+
+                // find current x coordinate and synchronize bar chart
+                const yCoordToFind = yValueFromMouse(y); // Replace with the desired x-coordinate - translate mouse x to value on x-axis
+                
+                // find the X that goes with this total sum of Capacity - the X that produces this stack   
+                // iterate over data, calculate sum for each X; find the largest X whose sum is smaller and the smallest X whose sum is larger
+                // Iterate through the array of objects
+                // TODO depending on whether the first sum < yCoord we look for the first sum that higher or vv is the first sum > yCoord we look for the first sum that is lower
+
+                // this code looks for the first that lower, assuming declining sum
+                let prevX, nextX
+                for (const obj of data) {
+
+                    if (obj.sum < yCoordToFind) {
+                        nextX = obj.x
+                        break
+                    } else { prevX = obj.x }
+
+                }
+                
+                const valuesAtX = findValuesAtX(nextX, data);
+
+                // // TODO only if the values have changed should we proceed (to prevent unnecessary repaints)
+                const updatedBarData = [];
+                let sum = 0;
+                for (const areaValue of valuesAtX) {
+                    updatedBarData.push({
+                        series: areaValue.series,
+                        value: areaValue.value,
+                    });
+                    sum = sum + areaValue.value;
+                }
+                // calculate interpolated X?? 
+                const newX = xScale(nextX);
+                
+
+                //update vertical line and marker
+                verticalLine.attr('x1', newX).attr('x2', newX); // Move line
+                verticalLineMarker.attr('x', newX - 10); // Move marker
+
+                repaintBar(updatedBarData);
+
+
             });
 
             horizontalLineMarker.call(dragHorizontalLine);
@@ -289,7 +327,7 @@ export default {
 
                 // Extract values for each series at the specified x-coordinate
                 const values = Object.keys(closestDataPoint)
-                    .filter((key) => key !== 'x')
+                    .filter((key) => key !== 'x' && key !== 'sum')
                     .map((series) => ({
                         series,
                         value: closestDataPoint[series],
@@ -444,6 +482,17 @@ const data = [
     },
 ];
 
+// Iterate through the array of objects
+for (const obj of data) {
+    let sum = Object.keys(obj).reduce(function (sum, key) {
+        if (key !== 'x') {
+            return sum + obj[key];
+        }
+        return sum;
+    }, 0);
+    obj['sum'] = sum
+}
+
 function findYforXinSerie(serie, xValue) {
     // x0: find largest X in serie that is smaller than or equal to xValue
     // Initialize variables to keep track of the largest x and the corresponding object
@@ -458,10 +507,7 @@ function findYforXinSerie(serie, xValue) {
             largestXObject = obj; // Update the corresponding object
         }
     }
-    console.log(`largest smaller ${JSON.stringify(largestXObject[serie])} for x = ${largestX}`)
-
-
-
+    
     // x1: find smallest X in serie that is larger than xValue
 
     let smallestX = Infinity; // Initialize to negative infinity so that any x value is greater
@@ -475,7 +521,7 @@ function findYforXinSerie(serie, xValue) {
             smallestXObject = obj; // Update the corresponding object
         }
     }
-    console.log(`smallest larger ${JSON.stringify(smallestXObject[serie])} for x = ${smallestX}`)
+    
 
     // get the cost values for for these two: y0 and y1
     const y0 = largestXObject[serie]
