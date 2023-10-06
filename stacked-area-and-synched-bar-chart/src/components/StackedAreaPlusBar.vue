@@ -253,8 +253,8 @@ export default {
                 .attr('width', 20)
                 .attr('height', 20);
 
-            // Drag behavior horizontal line marker
-            const dragHorizontalLine = d3.drag().on('drag', function () {
+// Drag behavior horizontal line marker
+const dragHorizontalLine = d3.drag().on('drag', function () {
                 var coordinates = d3.pointer(event);
                 var x = coordinates[0] - 40;
                 var y = coordinates[1];
@@ -267,21 +267,31 @@ export default {
                 const yCoordToFind = yValueFromMouse(y); // Replace with the desired x-coordinate - translate mouse x to value on x-axis
                 
                 // find the X that goes with this total sum of Capacity - the X that produces this stack   
-                // iterate over data, calculate sum for each X; find the largest X whose sum is smaller and the smallest X whose sum is larger
-                // Iterate through the array of objects
-                // TODO depending on whether the first sum < yCoord we look for the first sum that higher or vv is the first sum > yCoord we look for the first sum that is lower
+                // iterate over data, take sum for each X
+                // find the first X where the previous sum is larger and the next is smaller than yCoordToFind or the prev is smaller and the next is larger
 
                 // this code looks for the first that lower, assuming declining sum
                 let prevX, nextX
-                for (const obj of data) {
-
-                    if (obj.sum < yCoordToFind) {
+                let prevSum , nextSum
+                
+                for (const obj of data) {                
+                    if (obj.sum < yCoordToFind && prevSum > yCoordToFind) {
                         nextX = obj.x
                         break
-                    } else { prevX = obj.x }
+                    } 
+                    if (obj.sum > yCoordToFind && prevSum < yCoordToFind) {
+                        nextX = obj.x
+                        break
+                    } 
+                    prevX = nextX; 
+                    nextX=obj.x 
+                    prevSum = nextSum||obj.sum;
+                    nextSum = obj.sum
 
                 }
-                
+                // TODO perhaps the value at prevX is closer than the one at nextX ; do anything with that? interpolate?
+                // if the previous x has a value closer to the set Y value than the nextX then use prevX 
+                // if abs(prevSum-yCoordToFind)< abs(nextSum-yCoordToFind) {nextX = prevX}
                 const valuesAtX = findValuesAtX(nextX, data);
 
                 // // TODO only if the values have changed should we proceed (to prevent unnecessary repaints)
@@ -422,10 +432,10 @@ export default {
 const data = [
     {
         x: 1,
-        transport: 10,
+        transport: 20,
         windenergy: 4,
         nuclear: 10,
-        biomass: 15,
+        biomass: 25,
         waterenergy: 0,
         newtech: 2,
         wonderstuff: 0,
@@ -454,7 +464,7 @@ const data = [
         x: 4,
         transport: 1,
         windenergy: 0,
-        nuclear: 9,
+        nuclear: 11,
         biomass: 13,
         waterenergy: 2,
         newtech: 2,
@@ -464,7 +474,7 @@ const data = [
         x: 5,
         transport: 0,
         windenergy: 0,
-        nuclear: 4,
+        nuclear: 5,
         biomass: 2,
         waterenergy: 0,
         newtech: 1,
@@ -474,7 +484,7 @@ const data = [
         x: 7.3,
         transport: 0,
         windenergy: 0,
-        nuclear: 5,
+        nuclear: 4,
         biomass: 2,
         waterenergy: 0,
         newtech: 1,
