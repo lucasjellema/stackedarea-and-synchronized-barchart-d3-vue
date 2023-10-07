@@ -122,14 +122,14 @@ export default {
                     const series = d.key;
 
                     // Log or display the information as needed
-                   
+
 
                     const xCoordToFind = xValueFromMouse(x); // Replace with the desired x-coordinate - translate mouse x to value on x-axis
                     const yValue = yValueFromMouse(y);
 
 
                     const valuesAtX = findValuesAtX(xCoordToFind, data);
-  
+
                     console.log(`Clicked on series: ${series}`);
 
                     const updatedBarData = [
@@ -253,8 +253,8 @@ export default {
                 .attr('width', 20)
                 .attr('height', 20);
 
-// Drag behavior horizontal line marker
-const dragHorizontalLine = d3.drag().on('drag', function () {
+            // Drag behavior horizontal line marker
+            const dragHorizontalLine = d3.drag().on('drag', function () {
                 var coordinates = d3.pointer(event);
                 var x = coordinates[0] - 40;
                 var y = coordinates[1];
@@ -265,33 +265,36 @@ const dragHorizontalLine = d3.drag().on('drag', function () {
 
                 // find current x coordinate and synchronize bar chart
                 const yCoordToFind = yValueFromMouse(y); // Replace with the desired x-coordinate - translate mouse x to value on x-axis
-                
+
                 // find the X that goes with this total sum of Capacity - the X that produces this stack   
                 // iterate over data, take sum for each X
                 // find the first X where the previous sum is larger and the next is smaller than yCoordToFind or the prev is smaller and the next is larger
 
-                // this code looks for the first that lower, assuming declining sum
-                let prevX, nextX
-                let prevSum , nextSum
-                
-                for (const obj of data) {                
-                    if (obj.sum < yCoordToFind && prevSum > yCoordToFind) {
-                        nextX = obj.x
-                        break
-                    } 
-                    if (obj.sum > yCoordToFind && prevSum < yCoordToFind) {
-                        nextX = obj.x
-                        break
-                    } 
-                    prevX = nextX; 
-                    nextX=obj.x 
-                    prevSum = nextSum||obj.sum;
-                    nextSum = obj.sum
+                // this code looks for the first data that is lower, assuming declining sum
+                let prevX = data[0].x, nextX
+                let prevSum = data[0].sum, nextSum
 
+                for (const obj of data) {
+                    nextSum = obj.sum
+                    nextX = obj.x
+                    if (nextSum< yCoordToFind) { // && prevSum > yCoordToFind) {
+                        break
+                    }
+                    // we can assume that sum is only decreasing
+                    // if (obj.sum > yCoordToFind && prevSum < yCoordToFind) {
+                    //     nextX = obj.x
+                    //     break
+                    // } 
+                    else {
+                        prevX = nextX;
+                        prevSum = nextSum;
+                    }
                 }
-                // TODO perhaps the value at prevX is closer than the one at nextX ; do anything with that? interpolate?
                 // if the previous x has a value closer to the set Y value than the nextX then use prevX 
-                // if abs(prevSum-yCoordToFind)< abs(nextSum-yCoordToFind) {nextX = prevX}
+
+                if (Math.abs(prevSum - yCoordToFind) < Math.abs(nextSum - yCoordToFind)) {
+                    nextX = prevX
+                }
                 const valuesAtX = findValuesAtX(nextX, data);
 
                 // // TODO only if the values have changed should we proceed (to prevent unnecessary repaints)
@@ -306,7 +309,7 @@ const dragHorizontalLine = d3.drag().on('drag', function () {
                 }
                 // calculate interpolated X?? 
                 const newX = xScale(nextX);
-                
+
 
                 //update vertical line and marker
                 verticalLine.attr('x1', newX).attr('x2', newX); // Move line
@@ -491,7 +494,7 @@ const data = [
         wonderstuff: 1,
     },
 ];
-
+data.sort((a, b) => d3.ascending(a.x, b.x));
 // Iterate through the array of objects
 for (const obj of data) {
     let sum = Object.keys(obj).reduce(function (sum, key) {
@@ -517,7 +520,7 @@ function findYforXinSerie(serie, xValue) {
             largestXObject = obj; // Update the corresponding object
         }
     }
-    
+
     // x1: find smallest X in serie that is larger than xValue
 
     let smallestX = Infinity; // Initialize to negative infinity so that any x value is greater
@@ -531,7 +534,7 @@ function findYforXinSerie(serie, xValue) {
             smallestXObject = obj; // Update the corresponding object
         }
     }
-    
+
 
     // get the cost values for for these two: y0 and y1
     const y0 = largestXObject[serie]
