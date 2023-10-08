@@ -217,15 +217,11 @@ export default {
                     });
                     sum = sum + areaValue.value;
                 }
-
                 const newY = yScale(sum);
-
                 // update horizontal line and marker
                 horizontalLine.attr('y1', newY).attr('y2', newY); // Move line
                 horizontalLineMarker.attr('y', newY - 10); // Move marker
-
                 repaintBar(updatedBarData);
-
             }
 
 
@@ -261,21 +257,24 @@ export default {
                 .attr('x', -30)
                 .attr('y', 90)
                 .attr('width', 20)
-                .attr('height', 20);
+                .attr('height', 20)
+                .call(d3.drag()  // Call the drag behavior
+                    .on("drag", draggingHorizontalLineMarker)
+                )
+                ;
 
-            // Drag behavior horizontal line marker
-            const dragHorizontalLine = d3.drag().on('drag', function () {
-                var coordinates = d3.pointer(event);
-                var x = coordinates[0] - 40;
-                var y = coordinates[1];
 
-                x = Math.max(0, Math.min(width - 20, x)); // Limit the marker within the SVG
-                d3.select(this).attr('y', y); // Move marker
-                horizontalLine.attr('y1', y + 10).attr('y2', y + 10); // Move line
+            function draggingHorizontalLineMarker(event, d) {
+                if (event.y < 0 || event.y > height) { return }
+
+                d3.select(this)
+                    .attr("y", event.y - 10);  // 10 is half of the rectangle's height
+                const y = event.y
+
+                horizontalLine.attr('y1', y).attr('y2', y); // Move line
 
                 // find current x coordinate and synchronize bar chart
-                const yCoordToFind = yValueFromMouse(y); // Replace with the desired x-coordinate - translate mouse x to value on x-axis
-
+                const yCoordToFind = yValueFromMouse(y); 
                 // find the X that goes with this total sum of Capacity - the X that produces this stack   
                 // iterate over data, take sum for each X
                 // find the first X where the previous sum is larger and the next is smaller than yCoordToFind or the prev is smaller and the next is larger
@@ -327,10 +326,9 @@ export default {
 
                 repaintBar(updatedBarData);
 
+            };
 
-            });
-
-            horizontalLineMarker.call(dragHorizontalLine);
+            //   horizontalLineMarker.call(dragHorizontalLine);
 
             function updateLines(x, y) {
                 verticalLine.attr('x1', x).attr('x2', x);
