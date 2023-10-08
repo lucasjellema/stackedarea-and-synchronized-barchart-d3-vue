@@ -1,16 +1,27 @@
 <script >
 import * as d3 from 'd3';
+import { useCollaborationStore } from '../stores/collaborationStore';
+
 
 export default {
+    setup() {
+        const collaborationStore = useCollaborationStore();
+        collaborationStore.prepareData()
+        const data = collaborationStore.fakeData
+        return { collaborationStore, data }
+    },
+
     props: {
         countries: Array
     },
     emits: ['bar-clicked'],
     mounted() {
-        this.createBarChart();
+
+        this.createBarChart(this.data);
+
     },
     methods: {
-        createBarChart() {
+        createBarChart(data) {
             // Create an SVG container
             const margin = { top: 20, right: 30, bottom: 40, left: 40 };
             const width = 900 - margin.left - margin.right;
@@ -105,7 +116,7 @@ export default {
 
                     const xValue = xValueFromMouse(x);
                     // find the Y value for the selected series
-                    const yValue = findYforXinSerie(d.key, xValue);
+                    const yValue = findYforXinSerie(d.key, xValue, data);
                     tooltipText = `${tooltipText}: Reductions: ${xValue.toFixed(2)} Cost: ${yValue.toFixed(2)}`
                     tooltip.text(tooltipText);
 
@@ -277,7 +288,7 @@ export default {
                 for (const obj of data) {
                     nextSum = obj.sum
                     nextX = obj.x
-                    if (nextSum< yCoordToFind) { // && prevSum > yCoordToFind) {
+                    if (nextSum < yCoordToFind) { // && prevSum > yCoordToFind) {
                         break
                     }
                     // we can assume that sum is only decreasing
@@ -432,81 +443,8 @@ export default {
     },
 };
 
-const data = [
-    {
-        x: 1,
-        transport: 20,
-        windenergy: 4,
-        nuclear: 10,
-        biomass: 25,
-        waterenergy: 0,
-        newtech: 2,
-        wonderstuff: 0,
-    },
-    {
-        x: 2,
-        transport: 6,
-        windenergy: 5,
-        nuclear: 20,
-        biomass: 10,
-        waterenergy: 1,
-        newtech: 5,
-        wonderstuff: 0,
-    },
-    {
-        x: 3,
-        transport: 4,
-        windenergy: 3,
-        nuclear: 15,
-        biomass: 8,
-        waterenergy: 8,
-        newtech: 5,
-        wonderstuff: 0,
-    },
-    {
-        x: 4,
-        transport: 1,
-        windenergy: 0,
-        nuclear: 11,
-        biomass: 13,
-        waterenergy: 2,
-        newtech: 2,
-        wonderstuff: 2,
-    },
-    {
-        x: 5,
-        transport: 0,
-        windenergy: 0,
-        nuclear: 5,
-        biomass: 2,
-        waterenergy: 0,
-        newtech: 1,
-        wonderstuff: 4,
-    },
-    {
-        x: 7.3,
-        transport: 0,
-        windenergy: 0,
-        nuclear: 4,
-        biomass: 2,
-        waterenergy: 0,
-        newtech: 1,
-        wonderstuff: 1,
-    },
-];
-data.sort((a, b) => d3.ascending(a.x, b.x));
-// Iterate through the array of objects
-for (const obj of data) {
-    let sum = Object.keys(obj).reduce(function (sum, key) {
-        if (key !== 'x') {
-            return sum + obj[key];
-        }
-        return sum;
-    }, 0);
-    obj['sum'] = sum
-}
 
-function findYforXinSerie(serie, xValue) {
+function findYforXinSerie(serie, xValue, data) {
     // x0: find largest X in serie that is smaller than or equal to xValue
     // Initialize variables to keep track of the largest x and the corresponding object
     let largestX = -Infinity; // Initialize to negative infinity so that any x value is greater
@@ -560,7 +498,7 @@ const barData = [
 </script>
 <template>
     Stacked Area Chart for {{ countries }}
-
+    <h1>Counts {{ collaborationStore.myData.prop }} - {{ collaborationStore.heatmaprecordCount }}</h1>
     <!-- Create a container for the chart -->
     <div id="chart">
 
