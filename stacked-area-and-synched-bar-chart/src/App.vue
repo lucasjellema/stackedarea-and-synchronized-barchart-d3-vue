@@ -11,24 +11,23 @@ function handleButtonClick(collboaratingCountries) {
 }
 
 function handleBarClick(eventData) {
-      console.log('Bar Clicked:', eventData);
-      // You can handle the bar click event here
-    }
+  console.log('Bar Clicked:', eventData);
+  // You can handle the bar click event here
+}
 
 
 const collaborationStore = useCollaborationStore();
+//TODO read from collaboration store which combinations of collaborating countries are even available - in addition to the fake data set
 </script>
 
 <template>
-  <h1>People {{collaborationStore.recordCount}} - {{collaborationStore.heatmaprecordCount}}</h1>
-
-    <div>
+  <div>
     <h1>Collaboration of Countries {{ countries }}</h1>
-    <button @click="handleButtonClick(['Indonesia','Singapore'])">Collaborate Indonesia and Singapore</button>
-    <button @click="handleButtonClick(['Germany','The Netherlands'])">Collaborate Germany and Netherlands</button>
-    <button @click="handleButtonClick(['USA','Canada','Mexico'])">Collaborate USA, Canada, Mexico</button>
+    <button @click="handleButtonClick(['Indonesia', 'Singapore'])">Collaborate Indonesia and Singapore</button>
+    <button @click="handleButtonClick(['Germany', 'The Netherlands'])">Collaborate Germany and Netherlands</button>
+    <button @click="handleButtonClick(['USA', 'Canada', 'Mexico'])">Collaborate USA, Canada, Mexico</button>
     <div>
-    <StackedAreaPlusBar :countries=countries @bar-clicked="handleBarClick"/>
+      <StackedAreaPlusBar :countries=countries @bar-clicked="handleBarClick" />
     </div>
   </div>
 </template>
