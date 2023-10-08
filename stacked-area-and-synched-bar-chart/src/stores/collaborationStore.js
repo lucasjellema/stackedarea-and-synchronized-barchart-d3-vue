@@ -26,7 +26,7 @@ export const useCollaborationStore = defineStore({
   actions: {
     async prepareData() {
       prepareFakeData(this.fakeDataSet)
-      this.myData = {prop:42}
+      // this is how you can add data in store's state this.myData = {prop:42}
     }
 
   },
@@ -36,13 +36,13 @@ function prepareFakeData(data) {
   data.sort((a, b) => d3.ascending(a.x, b.x));
   // Iterate through the array of objects
   for (const obj of data) {
-      let sum = Object.keys(obj).reduce(function (sum, key) {
-          if (key !== 'x') {
-              return sum + obj[key];
-          }
-          return sum;
-      }, 0);
-      obj['sum'] = sum
+    let sum = Object.keys(obj).reduce(function (sum, key) {
+      if (key !== 'x') {
+        return sum + obj[key];
+      }
+      return sum;
+    }, 0);
+    obj['sum'] = sum
   }
-  
+
 }
