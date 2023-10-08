@@ -143,16 +143,7 @@ export default {
 
                     console.log(`Clicked on series: ${series}`);
 
-                    const updatedBarData = [
-                        /*        { series: "transport", value: 1 },
-                      { series: "windenergy", value: 22 },
-                      { series: "nuclear", value: 5 },
-                      { series: "biomass", value: 5 },
-                      { series: "waterenergy", value: 8 },
-                      { series: "newtech", value: 8 },
-                      { series: "wonderstuff", value: 3 }
-                  */
-                    ];
+                    const updatedBarData = [];
                     for (const areaValue of valuesAtX) {
                         updatedBarData.push({
                             series: areaValue.series,
@@ -201,24 +192,16 @@ export default {
                 .attr('y1', 0)
                 .attr('y2', height + 40);
 
-            // vertical line Marker
-            const verticalLineMarker = svg
-                .append('rect')
-                .attr('class', 'marker')
-                .attr('x', 400)
-                .attr('y', height + 20)
-                .attr('width', 20)
-                .attr('height', 20);
 
-            // Drag behavior vertical line marker
-            const drag = d3.drag().on('drag', function () {
-                var coordinates = d3.pointer(event);
-                var x = coordinates[0] - 40;
-                var y = coordinates[1];
 
-                x = Math.max(0, Math.min(width - 20, x)); // Limit the marker within the SVG
-                d3.select(this).attr('x', x); // Move marker
-                verticalLine.attr('x1', x + 10).attr('x2', x + 10); // Move line
+            function draggingVerticalLineMarker(event, d) {
+                if (event.x < 0 || event.x > width) { return }
+
+                d3.select(this)
+                    .attr("x", event.x - 10)  // 10 is half of the rectangle's width
+                // .attr("y", event.y - 10);  // 10 is half of the rectangle's height
+                const x = event.x
+                verticalLine.attr('x1', x).attr('x2', x); // Move line
 
                 // find current x coordinate and synchronize bar chart
                 const xCoordToFind = xValueFromMouse(x); // Replace with the desired x-coordinate - translate mouse x to value on x-axis
@@ -242,9 +225,25 @@ export default {
                 horizontalLineMarker.attr('y', newY - 10); // Move marker
 
                 repaintBar(updatedBarData);
-            });
 
-            verticalLineMarker.call(drag);
+            }
+
+
+
+            // vertical line Marker
+            const verticalLineMarker = svg
+                .append('rect')
+                .attr('class', 'marker')
+                .attr('x', 400)
+                .attr('y', height + 20)
+                .attr('width', 20)
+                .attr('height', 20)
+                .call(d3.drag()  // Call the drag behavior
+                    .on("drag", draggingVerticalLineMarker)
+                )
+                ;
+
+
 
             // Create the horizontal line
             const horizontalLine = svg
@@ -498,7 +497,7 @@ const barData = [
 </script>
 <template>
     Stacked Area Chart for {{ countries }}
-    <h1>Counts {{ collaborationStore.myData.prop }} - {{ collaborationStore.heatmaprecordCount }}</h1>
+    <!-- <h1>Counts  {{ collaborationStore.heatmaprecordCount }}</h1> -->
     <!-- Create a container for the chart -->
     <div id="chart">
 
