@@ -4,7 +4,7 @@ import { ref, computed } from 'vue';
 import StackedAreaPlusBar from './components/StackedArea.vue'
 
 const countries = ref([])
-countries.value.push("Belgium")
+countries.value.push("SG")
 
 function handleButtonClick(collboaratingCountries) {
   countries.value = collboaratingCountries
@@ -23,9 +23,9 @@ const collaborationStore = useCollaborationStore();
 <template>
   <div>
     <h1>Collaboration of Countries {{ countries }}</h1>
-    <button @click="handleButtonClick(['Indonesia', 'Singapore'])">Collaborate Indonesia and Singapore</button>
-    <button @click="handleButtonClick(['Germany', 'The Netherlands'])">Collaborate Germany and Netherlands</button>
-    <button @click="handleButtonClick(['USA', 'Canada', 'Mexico'])">Collaborate USA, Canada, Mexico</button>
+    <button @click="handleButtonClick(['ID','SG'])">Collaborate Indonesia and Singapore</button>
+    <button @click="handleButtonClick(['ID'])">Just Indonesia</button>
+    <button @click="handleButtonClick(['MM','PH'])">Collaborate Myanmar and Philipines</button>
     <div>
       <StackedAreaPlusBar :countries=countries @bar-clicked="handleBarClick" />
     </div>

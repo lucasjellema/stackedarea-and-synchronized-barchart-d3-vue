@@ -1,13 +1,30 @@
 <script >
 import * as d3 from 'd3';
 import { useCollaborationStore } from '../stores/collaborationStore';
+import { ref, watch, getCurrentInstance } from 'vue';
 
 
 export default {
-    setup() {
+    setup(props) {
         const collaborationStore = useCollaborationStore();
-        collaborationStore.prepareData()
-        const data = collaborationStore.fakeData
+        collaborationStore.prepareData(props.countries)
+
+        //        const data = collaborationStore.fakeData
+        const data = collaborationStore.data
+
+        // Get the component's instance
+        const instance = getCurrentInstance();
+        // Watch the propValue
+        watch(() => props.countries, (newValue, oldValue) => {
+
+            collaborationStore.prepareData(props.countries)
+
+//        const data = collaborationStore.fakeData
+const data = collaborationStore.data
+
+            // Invoke the method defined in the methods option
+            instance.proxy.createBarChart(data);
+        });
         return { collaborationStore, data }
     },
 
@@ -34,6 +51,7 @@ export default {
                 .attr('height', height + margin.top + margin.bottom)
                 .append('g')
                 .attr('transform', `translate(${margin.left},${margin.top})`);
+                
 
             var tooltip = d3.select("body")
                 .append("div")
@@ -274,7 +292,7 @@ export default {
                 horizontalLine.attr('y1', y).attr('y2', y); // Move line
 
                 // find current x coordinate and synchronize bar chart
-                const yCoordToFind = yValueFromMouse(y); 
+                const yCoordToFind = yValueFromMouse(y);
                 // find the X that goes with this total sum of Capacity - the X that produces this stack   
                 // iterate over data, take sum for each X
                 // find the first X where the previous sum is larger and the next is smaller than yCoordToFind or the prev is smaller and the next is larger
