@@ -1,5 +1,6 @@
 {
-  "name": "people-application",
+  "name": "stacked-area-and-synched-bar-chart",
+  "homepage": "https://lucasjellema.github.io/stackedarea-and-synchronized-barchart-d3-vue/",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -7,7 +8,9 @@
     "build": "run-p type-check build-only",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false"
+    "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "d3": "^6.7.0",
@@ -21,6 +24,7 @@
     "@types/node": "^18.17.5",
     "@vitejs/plugin-vue": "^4.3.1",
     "@vue/tsconfig": "^0.4.0",
+    "gh-pages": "^6.0.0",
     "npm-run-all": "^4.1.5",
     "typescript": "~5.1.6",
     "vite": "^4.4.9",
