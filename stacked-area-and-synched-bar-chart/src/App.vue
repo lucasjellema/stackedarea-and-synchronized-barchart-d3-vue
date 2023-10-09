@@ -31,10 +31,15 @@ const collaborationStore = useCollaborationStore();
 
   <div v-if="isChecked">
     <h1>Collaboration of Countries {{ countries }}</h1>
-    <button @click="handleButtonClick(['ID', 'SG'])">Collaborate Indonesia and Singapore</button>
+    <p>    <button @click="handleButtonClick(['ID', 'SG'])">Collaborate Indonesia and Singapore</button>
     <button @click="handleButtonClick(['ID'])">Just Indonesia</button>
-    <button @click="handleButtonClick(['MM', 'PH'])">Collaborate Myanmar and Philipines</button>
+    <button @click="handleButtonClick(['SG'])">Just Singapore</button>
+  </p>
+    <p>
+    <button @click="handleButtonClick(['MM', 'PH'])">Collaborate Myanmar and Philipines (FAKE)</button>
+    <button @click="handleButtonClick(['MM'])">Just Myanmar (FAKE)</button>
     <button @click="handleButtonClick(['FAKE'])">Show Fake Data</button>
+  </p>
     <div>
       <StackedAreaPlusBar :countries=countries @bar-clicked="handleBarClick" />
       Most recently selected technology: {{ selectedTechnology }}
