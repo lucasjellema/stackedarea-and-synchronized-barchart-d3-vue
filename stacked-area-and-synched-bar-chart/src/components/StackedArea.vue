@@ -8,22 +8,26 @@ export default {
     setup(props) {
         const collaborationStore = useCollaborationStore();
         collaborationStore.prepareData(props.countries)
-
-        //        const data = collaborationStore.fakeData
         const data = collaborationStore.data
 
         // Get the component's instance
         const instance = getCurrentInstance();
         // Watch the propValue
         watch(() => props.countries, (newValue, oldValue) => {
-
             collaborationStore.prepareData(props.countries)
-
-//        const data = collaborationStore.fakeData
-const data = collaborationStore.data
-
+            const data = collaborationStore.data
+            // Create a color scale for the series
+            const color = d3
+                .scaleOrdinal()
+                .domain(Object.keys(data[0]).filter((key) => key !== 'x' && key !== 'sum'))
+                .range(d3.schemeCategory10);
+ 
             // Invoke the method defined in the methods option
-            instance.proxy.createBarChart(data);
+            instance.proxy.createAreaChart(data, color);
+            const barData = []
+            Object.keys(data[0]).filter((key) => key !== 'x' && key !== 'sum').forEach((key) => barData.push({ series: key, value: data[0][key] }))
+
+            instance.proxy.drawBarChart(barData, color);
         });
         return { collaborationStore, data }
     },
@@ -33,16 +37,33 @@ const data = collaborationStore.data
     },
     emits: ['bar-clicked'],
     mounted() {
+        // Create a color scale for the series
+        const color = d3
+            .scaleOrdinal()
+            .domain(Object.keys(this.data[0]).filter((key) => key !== 'x' && key !== 'sum'))
+            .range(d3.schemeCategory10);
+        this.createAreaChart(this.data, color);
 
-        this.createBarChart(this.data);
+        // TODO position horizontal and vertical markers and derive bar data from that 
+
+        const barData = []
+        Object.keys(this.data[0]).filter((key) => key !== 'x' && key !== 'sum').forEach((key) => barData.push({ series: key, value: this.data[0][key] }))
+  
+        this.drawBarChart(barData, color)
 
     },
     methods: {
-        createBarChart(data) {
+
+        createAreaChart(data,color) {
+            const repaintBarProxy = this.repaintBar
+
             // Create an SVG container
+
             const margin = { top: 20, right: 30, bottom: 40, left: 40 };
             const width = 900 - margin.left - margin.right;
             const height = 600 - margin.top - margin.bottom;
+            d3.select('#chart').selectAll("*").remove();
+            d3.select('#bar-chart').selectAll("*").remove();
 
             const svg = d3
                 .select('#chart')
@@ -51,7 +72,7 @@ const data = collaborationStore.data
                 .attr('height', height + margin.top + margin.bottom)
                 .append('g')
                 .attr('transform', `translate(${margin.left},${margin.top})`);
-                
+
 
             var tooltip = d3.select("body")
                 .append("div")
@@ -60,14 +81,10 @@ const data = collaborationStore.data
                 .style("z-index", "10")
                 .style("visibility", "hidden")
                 .text("");
-            // Create a color scale for the series
-            const color = d3
-                .scaleOrdinal()
-                .domain(Object.keys(data[0]).filter((key) => key !== 'x'))
-                .range(d3.schemeCategory10);
+
 
             // Create x and y scales
-            const xScale = d3
+            xScale = d3
                 .scaleLinear()
                 .domain([d3.min(data, (d) => d.x), d3.max(data, (d) => d.x)])
                 .range([0, width]);
@@ -76,7 +93,7 @@ const data = collaborationStore.data
                 return xScale.invert(mouseX);
             }
 
-            const yScale = d3
+            yScale = d3
                 .scaleLinear()
                 .domain([0, d3.max(data, (d) => d.sum)])
                 .range([height, 0]);
@@ -119,7 +136,7 @@ const data = collaborationStore.data
                     var y = coordinates[1];
                     const xValue = xValueFromMouse(x);
                     const yValue = yValueFromMouse(y);
-                    tooltipText = `${tooltipText}: Reductions: ${xValue}`
+                    tooltipText = `${tooltipText}: Reductions: ${xValue.toFixed(2)} Cost: ${yValue.toFixed(2)}`
                     tooltip.text(tooltipText);
 
 
@@ -137,9 +154,6 @@ const data = collaborationStore.data
                     const yValue = findYforXinSerie(d.key, xValue, data);
                     tooltipText = `${tooltipText}: Reductions: ${xValue.toFixed(2)} Cost: ${yValue.toFixed(2)}`
                     tooltip.text(tooltipText);
-
-
-
                     return tooltip.style("top", (y + 50 + margin.top) + "px").style("left", (x + 10) + "px");
                 })
                 .on("mouseout", function () { return tooltip.style("visibility", "hidden"); })
@@ -150,17 +164,9 @@ const data = collaborationStore.data
                     // Determine which series was clicked
                     const series = d.key;
 
-                    // Log or display the information as needed
-
-
                     const xCoordToFind = xValueFromMouse(x); // Replace with the desired x-coordinate - translate mouse x to value on x-axis
                     const yValue = yValueFromMouse(y);
-
-
                     const valuesAtX = findValuesAtX(xCoordToFind, data);
-
-                    console.log(`Clicked on series: ${series}`);
-
                     const updatedBarData = [];
                     for (const areaValue of valuesAtX) {
                         updatedBarData.push({
@@ -168,8 +174,7 @@ const data = collaborationStore.data
                             value: areaValue.value,
                         });
                     }
-
-                    repaintBar(updatedBarData);
+                    repaintBarProxy(updatedBarData);
                 });
 
             // Add x and y axes
@@ -205,19 +210,17 @@ const data = collaborationStore.data
             const verticalLine = svg
                 .append('line')
                 .attr('class', 'vertical-line')
-                .attr('x1', 410)
-                .attr('x2', 410)
+                .attr('x1', 5)
+                .attr('x2', 5)
                 .attr('y1', 0)
                 .attr('y2', height + 40);
-
-
 
             function draggingVerticalLineMarker(event, d) {
                 if (event.x < 0 || event.x > width) { return }
 
                 d3.select(this)
                     .attr("x", event.x - 10)  // 10 is half of the rectangle's width
-                // .attr("y", event.y - 10);  // 10 is half of the rectangle's height
+                
                 const x = event.x
                 verticalLine.attr('x1', x).attr('x2', x); // Move line
 
@@ -239,7 +242,7 @@ const data = collaborationStore.data
                 // update horizontal line and marker
                 horizontalLine.attr('y1', newY).attr('y2', newY); // Move line
                 horizontalLineMarker.attr('y', newY - 10); // Move marker
-                repaintBar(updatedBarData);
+                repaintBarProxy(updatedBarData);
             }
 
 
@@ -248,7 +251,7 @@ const data = collaborationStore.data
             const verticalLineMarker = svg
                 .append('rect')
                 .attr('class', 'marker')
-                .attr('x', 400)
+                .attr('x', -5)
                 .attr('y', height + 20)
                 .attr('width', 20)
                 .attr('height', 20)
@@ -256,24 +259,23 @@ const data = collaborationStore.data
                     .on("drag", draggingVerticalLineMarker)
                 )
                 ;
-
-
-
+            // calculate the Y coordindate from the the sum of all series values at the first, most left data point in order to position the horizontal line correctly
+            const newY = yScale(data[0].sum);
             // Create the horizontal line
             const horizontalLine = svg
                 .append('line')
                 .attr('class', 'vertical-line')
                 .attr('x1', -20)
                 .attr('x2', width)
-                .attr('y1', 100)
-                .attr('y2', 100);
+                .attr('y1', newY)
+                .attr('y2', newY);
 
             // vertical line Marker
             const horizontalLineMarker = svg
                 .append('rect')
                 .attr('class', 'marker')
                 .attr('x', -30)
-                .attr('y', 90)
+                .attr('y', newY-10)
                 .attr('width', 20)
                 .attr('height', 20)
                 .call(d3.drag()  // Call the drag behavior
@@ -342,16 +344,10 @@ const data = collaborationStore.data
                 verticalLine.attr('x1', newX).attr('x2', newX); // Move line
                 verticalLineMarker.attr('x', newX - 10); // Move marker
 
-                repaintBar(updatedBarData);
+                repaintBarProxy(updatedBarData);
 
             };
 
-            //   horizontalLineMarker.call(dragHorizontalLine);
-
-            function updateLines(x, y) {
-                verticalLine.attr('x1', x).attr('x2', x);
-                horizontalLine.attr('y1', y).attr('y2', y);
-            }
 
             // Function to find values for every area at a given x-coordinate
             function findValuesAtX(xCoord, data) {
@@ -374,15 +370,13 @@ const data = collaborationStore.data
 
                 return values;
             }
-
-            // bar
-
+        },
+        // bar
+        drawBarChart(barData, color) {
             // Create an SVG container for the bar chart
-            const barMargin = { top: 20, right: 30, bottom: 40, left: 40 };
-            const barWidth = 900 - barMargin.left - barMargin.right;
-            const barHeight = 250 - barMargin.top - barMargin.bottom;
 
-            const barSvg = d3
+
+            barSvg = d3
                 .select('#bar-chart')
                 .append('svg')
                 .attr('width', barWidth + barMargin.left + barMargin.right)
@@ -391,13 +385,13 @@ const data = collaborationStore.data
                 .attr('transform', `translate(${barMargin.left},${barMargin.top})`);
 
             // Create x and y scales for the bar chart
-            const barXScale = d3
+            barXScale = d3
                 .scaleBand()
                 .domain(barData.map((d) => d.series))
                 .range([0, barWidth])
                 .padding(0.1);
 
-            const barYScale = d3
+            barYScale = d3
                 .scaleLinear()
                 .domain([0, d3.max(barData, (d) => d.value)])
                 .nice()
@@ -414,15 +408,15 @@ const data = collaborationStore.data
                 .attr('y', (d) => barYScale(d.value))
                 .attr('width', barXScale.bandwidth())
                 .attr('height', (d) => barHeight - barYScale(d.value))
-                .attr('fill', (d, i) => d3.schemeCategory10[i])
+                .attr('fill', (d, i) => color(d.series)) // d3.schemeCategory10[i])
                 .on('click', (d, i) => {
                     // Emit a custom event when a bar is clicked
                     this.$emit('bar-clicked', { value: d, index: i });
                 })
                 ;
             // Add x and y axes for the bar chart
-            const barXAxis = d3.axisBottom(barXScale);
-            const barYAxis = d3.axisLeft(barYScale);
+            barXAxis = d3.axisBottom(barXScale);
+            barYAxis = d3.axisLeft(barYScale);
 
             barSvg
                 .append('g')
@@ -431,33 +425,43 @@ const data = collaborationStore.data
                 .call(barXAxis);
 
             barSvg.append('g').attr('class', 'y-axis').call(barYAxis);
-
-            function repaintBar(updatedBarData) {
-                // Replace the bar chart data with the updated dataset
-                barSvg
-                    .selectAll('.bar')
-                    .data(updatedBarData)
-                    .transition()
-                    .duration(1) // Add a transition for a smooth update
-                    .attr('x', (d) => barXScale(d.series))
-                    .attr('y', (d) => barYScale(d.value))
-                    .attr('width', barXScale.bandwidth())
-                    .attr('height', (d) => barHeight - barYScale(d.value));
-
-                // Update the x and y domains of the bar chart scales
-                barXScale.domain(updatedBarData.map((d) => d.series));
-                barYScale.domain([0, d3.max(updatedBarData, (d) => d.value)]);
-
-                // Update the x and y axes
-                barSvg.select('.x-axis').transition().duration(1000).call(barXAxis);
-
-                barSvg.select('.y-axis').transition().duration(1000).call(barYAxis);
-            }
-
         },
+        repaintBar(updatedBarData) {
+            // Replace the bar chart data with the updated dataset
+            barSvg
+                .selectAll('.bar')
+                .data(updatedBarData, d => d.series)
+                .transition()
+                .duration(1) // Add a transition for a smooth update
+                .attr('x', (d) => barXScale(d.series))
+                .attr('y', (d) => barYScale(d.value))
+                .attr('width', barXScale.bandwidth())
+                .attr('height', (d) => barHeight - barYScale(d.value));
+
+            // Update the x and y domains of the bar chart scales
+            
+            barYScale.domain([0, d3.max(updatedBarData, (d) => d.value)]);
+            barYAxis = d3.axisLeft(barYScale);
+
+
+            // Update the x and y axes
+            barSvg.select('.x-axis').transition().duration(1000).call(barXAxis);
+
+            barSvg.select('.y-axis').transition().duration(1000).call(barYAxis);
+        }
+
+
     },
 };
 
+let barSvg;
+let barXScale, barYScale
+let xScale, yScale
+
+let barXAxis, barYAxis
+const barMargin = { top: 20, right: 30, bottom: 40, left: 40 };
+const barWidth = 900 - barMargin.left - barMargin.right;
+const barHeight = 250 - barMargin.top - barMargin.bottom;
 
 function findYforXinSerie(serie, xValue, data) {
     // x0: find largest X in serie that is smaller than or equal to xValue
@@ -507,6 +511,8 @@ const barData = [
     { series: 'waterenergy', value: 18 },
     { series: 'newtech', value: 18 },
     { series: 'wonderstuff', value: 18 },
+    { series: 'Tech_A', value: 18 },
+    { series: 'Tech_B', value: 18 },
 ];
 
 
