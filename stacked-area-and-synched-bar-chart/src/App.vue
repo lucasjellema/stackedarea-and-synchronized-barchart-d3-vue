@@ -26,6 +26,7 @@ const collaborationStore = useCollaborationStore();
     <button @click="handleButtonClick(['ID','SG'])">Collaborate Indonesia and Singapore</button>
     <button @click="handleButtonClick(['ID'])">Just Indonesia</button>
     <button @click="handleButtonClick(['MM','PH'])">Collaborate Myanmar and Philipines</button>
+    <button @click="handleButtonClick(['FAKE'])">Show Fake Data</button>
     <div>
       <StackedAreaPlusBar :countries=countries @bar-clicked="handleBarClick" />
     </div>
