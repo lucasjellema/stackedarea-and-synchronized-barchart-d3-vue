@@ -16,7 +16,11 @@
     "d3": "^6.7.0",
     "pinia": "^2.1.6",
     "primevue": "^3.31.0",
-    "vue": "^3.3.4"
+    "vue": "^3.3.4",
+    "d3-geo": "^3.1.0",
+    "d3-geo-projection": "^4.0.0",
+    "topojson": "^3.0.2",
+    "topojson-client": "^3.1.0"
   },
   "devDependencies": {
     "@rollup/plugin-dsv": "^3.0.2",

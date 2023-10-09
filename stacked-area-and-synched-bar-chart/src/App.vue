@@ -2,8 +2,11 @@
 import { useCollaborationStore } from './stores/collaborationStore';
 import { ref, computed } from 'vue';
 import StackedAreaPlusBar from './components/StackedArea.vue'
+import WorldMap from './components/WorldMap.vue'
 
 const countries = ref([])
+const selectedTechnology = ref("")
+const isChecked = ref(true);
 countries.value.push("SG")
 
 function handleButtonClick(collboaratingCountries) {
@@ -12,7 +15,7 @@ function handleButtonClick(collboaratingCountries) {
 
 function handleBarClick(eventData) {
   console.log('Bar Clicked:', eventData);
-  // You can handle the bar click event here
+  selectedTechnology.value = eventData.index.series
 }
 
 
@@ -22,13 +25,24 @@ const collaborationStore = useCollaborationStore();
 
 <template>
   <div>
+    <!-- Checkbox to toggle between components -->
+    <input type="checkbox" v-model="isChecked"/>Show Area Chart or World Map
+
+
+  <div v-if="isChecked">
     <h1>Collaboration of Countries {{ countries }}</h1>
-    <button @click="handleButtonClick(['ID','SG'])">Collaborate Indonesia and Singapore</button>
+    <button @click="handleButtonClick(['ID', 'SG'])">Collaborate Indonesia and Singapore</button>
     <button @click="handleButtonClick(['ID'])">Just Indonesia</button>
-    <button @click="handleButtonClick(['MM','PH'])">Collaborate Myanmar and Philipines</button>
+    <button @click="handleButtonClick(['MM', 'PH'])">Collaborate Myanmar and Philipines</button>
     <button @click="handleButtonClick(['FAKE'])">Show Fake Data</button>
     <div>
       <StackedAreaPlusBar :countries=countries @bar-clicked="handleBarClick" />
+      Most recently selected technology: {{ selectedTechnology }}
     </div>
   </div>
+  <div v-else="isChecked">
+
+    <WorldMap></WorldMap>
+  </div>
+</div>
 </template>
