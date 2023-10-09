@@ -8,27 +8,14 @@
 <script>
 import * as d3 from 'd3';
 import * as topojson from 'topojson';
+import { geoAlbers, geoEquirectangular,geoEqualEarth } from 'd3-geo';
 
-const geoJsonUrl = 'countries.geojson';
+
+
 let svg, g, countryDataSet;
 
 const countryDetailsBox = document.getElementById("country-details");
 
-function showCountryDetails(details) {
-    // Display the country details box and populate it with details
-    countryDetailsBox.style.display = "block";
-    countryDetailsBox.innerHTML = `
-          <h2>${details.name}</h2>
-          <p>Population: ${details.population}</p>
-          <p>Capital: ${details.capital}</p>
-          <!-- Add more details as needed -->
-      `;
-}
-
-function hideCountryDetails() {
-    // Hide the country details box
-    countryDetailsBox.style.display = "none";
-}
 
 
 export default {
@@ -46,7 +33,11 @@ export default {
 
 
 
-        const projection = d3.geoNaturalEarth1().translate([t0.x, t0.y]).scale(t0.k);
+            //const projection = d3.geoNaturalEarth1().translate([t0.x, t0.y]).scale(t0.k);
+            const projection = d3.geoEquirectangular().translate([t0.x, t0.y]).scale(t0.k);
+            //const projection = d3.geoAlbers().translate([t0.x, t0.y]).scale(t0.k);
+
+
         const pathGenerator = d3.geoPath().projection(projection);
         let zoooom;
 
@@ -357,11 +348,9 @@ export default {
             // Append the HTML content to the foreignObject
             foreign.append("xhtml:div")
                 .style("font-family", "Arial")
-                .style("font-size", "18px")
+                .style("font-size", "14px")
                 .html(htmlContent);
         }
-
-
 
 
         function showCountryDetails(d) {
@@ -369,19 +358,6 @@ export default {
             const myRectangle = d3.select(".legend-rect");
             myRectangle.attr("display", "block");
 
-            // Create a group element to hold the text elements
-            const textGroup = myRectangle.append("g")
-                .attr("id", "text-group");
-
-            // Define the country details
-            const countryDetails = {
-                name: "Country Name",
-                population: "Population",
-                capital: "Capital City",
-                // Add more details as needed
-            };
-
-            // Example usage:
             writeHTMLInLegend(`<strong>${d.properties.name_long}</strong><br/>
             <ul>
                 <li>Continent: ${d.properties.continent}</li>
