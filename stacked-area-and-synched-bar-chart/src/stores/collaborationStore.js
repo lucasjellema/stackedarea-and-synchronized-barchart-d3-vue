@@ -30,8 +30,14 @@ export const useCollaborationStore = defineStore({
   actions: {
     async prepareData(countries) {
       console.log(`prepare data ${countries}`)
-      prepareFakeData(this.fakeDataSet)
-      this.dataSet = prepareCollaborationData(this.collaborationData, countries)
+      
+      if (countries.includes("FAKE")) { 
+        const data = JSON.parse(JSON.stringify(this.fakeDataSet))
+        prepareFakeData(data); 
+        this.dataSet = data }
+      else {
+        this.dataSet = prepareCollaborationData(this.collaborationData, countries)
+      }
       console.log(`this data set ${this.dataSet}`)
       // this is how you can add data in store's state this.myData = {prop:42}
     }
@@ -49,7 +55,7 @@ function prepareCollaborationData(raw, countries) {
   // all technologies should be present in every data object  - 0 if they have no value
   // 
 
-  const data = [  ]
+  const data = []
 
   const countryKey = deriveCountryKey(countries)
   console.log(`countryKey= ${countryKey}`)
@@ -95,7 +101,7 @@ function prepareCollaborationData(raw, countries) {
   //data = []
   for (let prop in consolidation) { // loop over all X values
     consolidation[prop].x = parseFloat(prop)
-    data.push( consolidation[prop])
+    data.push(consolidation[prop])
   }
   prepareFakeData(data)
   return data
