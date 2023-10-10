@@ -82,7 +82,7 @@ export default {
                 .style("visibility", "hidden")
                 .text("");
 
-
+            let minimumX = d3.min(data, (d) => d.x)
             // Create x and y scales
             xScale = d3
                 .scaleLinear()
@@ -209,16 +209,18 @@ export default {
                 .text('Capacity (GW) / Total System Cost (Billion $)');
 
             // Create the vertical line
+// determine the X coord for the minimumX value
+let miniumXCoord = xScale(minimumX)
             const verticalLine = svg
                 .append('line')
                 .attr('class', 'vertical-line')
-                .attr('x1', 5)
-                .attr('x2', 5)
+                .attr('x1', miniumXCoord)
+                .attr('x2', miniumXCoord)
                 .attr('y1', 0)
                 .attr('y2', height + 40);
 
             function draggingVerticalLineMarker(event, d) {
-                if (event.x < 0 || event.x > width) { return }
+                if (event.x < miniumXCoord || event.x > width) { return }
 
                 d3.select(this)
                     .attr("x", event.x - 10)  // 10 is half of the rectangle's width
@@ -253,7 +255,7 @@ export default {
             const verticalLineMarker = svg
                 .append('rect')
                 .attr('class', 'marker')
-                .attr('x', -5)
+                .attr('x', miniumXCoord-10)
                 .attr('y', height + 20)
                 .attr('width', 20)
                 .attr('height', 20)
