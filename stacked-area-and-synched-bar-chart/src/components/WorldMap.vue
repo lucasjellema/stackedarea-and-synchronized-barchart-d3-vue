@@ -12,7 +12,7 @@ import { geoAlbers, geoEquirectangular, geoEqualEarth } from 'd3-geo';
 import { scaleSequential } from 'd3-scale';
 import { useCollaborationStore } from '../stores/collaborationStore';
 
-
+import { ref, watch, getCurrentInstance } from 'vue';
 
 let svg, g, countryDataSet;
 
@@ -28,8 +28,8 @@ export default {
         const emitCountryClicked = (countryRecord) => {
             emit('country-clicked', countryRecord);
         };
-
-        return { collaborationStore, heatmapData }
+const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
+        return { collaborationStore, heatmapData,propertyToDisplay }
     },
 
     props: {
@@ -136,7 +136,7 @@ export default {
                     topoJSONdata.objects.countries
                 );
 
-                console.log(`${JSON.stringify(this.heatmapData)}`)
+                
                 countries.features.forEach((d) => {
                     // add all country properties from the TSV file to the features of the countries
                     Object.assign(d.properties, rowById[d.id]);
@@ -154,7 +154,7 @@ export default {
                             }
                         }
                     })
-                    console.log(`${d.properties.iso_a2} ---  ${JSON.stringify(d.properties)}`)
+                    
                     // todo - these properties are added in a not very efficient way
                     // "Mitigation_Potential(GtCO2e)":"234","Mitigation_Cost($/GtCO2e)":"5","Mitigation_Potential(GtCO2e)_at_50":"234","Mitigation_Potential(GtCO2e)_at_100":"250","Mitigation_Potential(GtCO2e)_at_200":"300"}
                 });
@@ -235,9 +235,9 @@ export default {
 
         loadAndProcessData().then((countries) => {
             countryDataSet = countries;
-// "Mitigation_Potential(GtCO2e)":"234","Mitigation_Cost($/GtCO2e)":"5","Mitigation_Potential(GtCO2e)_at_50":"234","Mitigation_Potential(GtCO2e)_at_100":"250","Mitigation_Potential(GtCO2e)_at_200":"300"}
-// now we can determine - depending on the toggle that indicates which category of these data properties should be used for the heatmap
-// the color scale - get min and max for the desired property from the heatmap data
+            // "Mitigation_Potential(GtCO2e)":"234","Mitigation_Cost($/GtCO2e)":"5","Mitigation_Potential(GtCO2e)_at_50":"234","Mitigation_Potential(GtCO2e)_at_100":"250","Mitigation_Potential(GtCO2e)_at_200":"300"}
+            // now we can determine - depending on the toggle that indicates which category of these data properties should be used for the heatmap
+            // the color scale - get min and max for the desired property from the heatmap data
 
 
             colorScale
@@ -255,7 +255,7 @@ export default {
             heatmapLegendG.call(heatmapLegend, {
                 spacing: 20,
                 textOffset: 15,
-                backgroundRectWidth: 80,
+                backgroundRectWidth: 100,
             });
 
             drawHeatmapLegend()
@@ -283,12 +283,12 @@ export default {
 
             // Add rectangle with gradient fill
             svg.append("rect")
-                .attr("x", 10)
+                .attr("x", 40)
                 .attr("y", 10)
                 .attr("width", 30)
                 .attr("height", 300)
                 .style("fill", "url(#gradient)")
-                .attr("transform", "translate(10, 500)")
+                .attr("transform", "translate(0, 500)")
 
 
             const yAxisScale = d3.scaleLinear()
@@ -299,10 +299,19 @@ export default {
             const yAxis = d3.axisRight(yAxisScale)
                 .ticks(5);
 
+
+
             svg.append('g')
-                .attr('transform', 'translate(60, 510) scale(1)')  // Position the axis; adjust as needed
+                .attr('transform', 'translate(75, 510) scale(1)')  // Position the axis; adjust as needed
                 .call(yAxis);
 
+            svg.append("text")
+                .attr("transform", "rotate(-90)")  // Rotate the text for vertical axis
+                .attr("y", 10)  // Position it 40 pixels to the left of the axis
+                .attr("x", -640)  // Position it at the middle of the axis
+                .attr("dy", "1em")  // Adjustments for positioning
+                .style("text-anchor", "middle")  // Center the text
+                .text("Mitigation_Potential(GtCO2e)");
 
         }
 
