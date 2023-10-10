@@ -221,8 +221,8 @@ export default {
 
             function draggingVerticalLineMarker(event, d) {
                 // note: 10 = half of width marker
-                if (event.x < minimumXCoord - 10 || event.x > width) { return }
-                const x = Math.max(event.x - 10, minimumXCoord)
+                if (event.x < minimumXCoord - 10 || event.x > width +20) { return }
+                const x =  Math.min(width, Math.max(event.x - 10, minimumXCoord))
 
                 d3.select(this)
                     .attr("x", x - 10)  // 10 is half of the rectangle's width
