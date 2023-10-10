@@ -21,7 +21,7 @@ export default {
                 .scaleOrdinal()
                 .domain(Object.keys(data[0]).filter((key) => key !== 'x' && key !== 'sum'))
                 .range(d3.schemeCategory10);
- 
+
             // Invoke the method defined in the methods option
             instance.proxy.createAreaChart(data, color);
             const barData = []
@@ -48,13 +48,13 @@ export default {
 
         const barData = []
         Object.keys(this.data[0]).filter((key) => key !== 'x' && key !== 'sum').forEach((key) => barData.push({ series: key, value: this.data[0][key] }))
-  
+
         this.drawBarChart(barData, color)
 
     },
     methods: {
 
-        createAreaChart(data,color) {
+        createAreaChart(data, color) {
             const repaintBarProxy = this.repaintBar
 
             // Create an SVG container
@@ -86,8 +86,8 @@ export default {
             // Create x and y scales
             xScale = d3
                 .scaleLinear()
-//                .domain([d3.min(data, (d) => d.x), d3.max(data, (d) => d.x)])
-                 // always have x scale start at zero, even if minimum value is larger than 0
+                //                .domain([d3.min(data, (d) => d.x), d3.max(data, (d) => d.x)])
+                // always have x scale start at zero, even if minimum value is larger than 0
                 .domain([0, d3.max(data, (d) => d.x)])
                 .range([0, width]);
 
@@ -209,23 +209,24 @@ export default {
                 .text('Capacity (GW) / Total System Cost (Billion $)');
 
             // Create the vertical line
-// determine the X coord for the minimumX value
-let miniumXCoord = xScale(minimumX)
+            // determine the X coord for the minimumX value
+            let minimumXCoord = xScale(minimumX)
             const verticalLine = svg
                 .append('line')
                 .attr('class', 'vertical-line')
-                .attr('x1', miniumXCoord)
-                .attr('x2', miniumXCoord)
+                .attr('x1', minimumXCoord)
+                .attr('x2', minimumXCoord)
                 .attr('y1', 0)
                 .attr('y2', height + 40);
 
             function draggingVerticalLineMarker(event, d) {
-                if (event.x < miniumXCoord || event.x > width) { return }
+                // note: 10 = half of width marker
+                if (event.x < minimumXCoord - 10 || event.x > width) { return }
+                const x = Math.max(event.x - 10, minimumXCoord)
 
                 d3.select(this)
-                    .attr("x", event.x - 10)  // 10 is half of the rectangle's width
-                
-                const x = event.x
+                    .attr("x", x - 10)  // 10 is half of the rectangle's width
+
                 verticalLine.attr('x1', x).attr('x2', x); // Move line
 
                 // find current x coordinate and synchronize bar chart
@@ -255,7 +256,7 @@ let miniumXCoord = xScale(minimumX)
             const verticalLineMarker = svg
                 .append('rect')
                 .attr('class', 'marker')
-                .attr('x', miniumXCoord-10)
+                .attr('x', minimumXCoord - 10)
                 .attr('y', height + 20)
                 .attr('width', 20)
                 .attr('height', 20)
@@ -279,7 +280,7 @@ let miniumXCoord = xScale(minimumX)
                 .append('rect')
                 .attr('class', 'marker')
                 .attr('x', -30)
-                .attr('y', newY-10)
+                .attr('y', newY - 10)
                 .attr('width', 20)
                 .attr('height', 20)
                 .call(d3.drag()  // Call the drag behavior
@@ -443,7 +444,7 @@ let miniumXCoord = xScale(minimumX)
                 .attr('height', (d) => barHeight - barYScale(d.value));
 
             // Update the x and y domains of the bar chart scales
-            
+
             barYScale.domain([0, d3.max(updatedBarData, (d) => d.value)]);
             barYAxis = d3.axisLeft(barYScale);
 
