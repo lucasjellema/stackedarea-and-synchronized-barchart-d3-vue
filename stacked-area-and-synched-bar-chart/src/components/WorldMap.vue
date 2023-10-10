@@ -8,7 +8,8 @@
 <script>
 import * as d3 from 'd3';
 import * as topojson from 'topojson';
-import { geoAlbers, geoEquirectangular,geoEqualEarth } from 'd3-geo';
+import { geoAlbers, geoEquirectangular, geoEqualEarth } from 'd3-geo';
+import { scaleSequential } from 'd3-scale';
 
 
 
@@ -33,9 +34,9 @@ export default {
 
 
 
-            //const projection = d3.geoNaturalEarth1().translate([t0.x, t0.y]).scale(t0.k);
-            const projection = d3.geoEquirectangular().translate([t0.x, t0.y]).scale(t0.k);
-            //const projection = d3.geoAlbers().translate([t0.x, t0.y]).scale(t0.k);
+        //const projection = d3.geoNaturalEarth1().translate([t0.x, t0.y]).scale(t0.k);
+        const projection = d3.geoEquirectangular().translate([t0.x, t0.y]).scale(t0.k);
+        //const projection = d3.geoAlbers().translate([t0.x, t0.y]).scale(t0.k);
 
 
         const pathGenerator = d3.geoPath().projection(projection);
@@ -94,6 +95,11 @@ export default {
                 nameLength < 6 ? 'Short' : 'Long' + ' ' + nameLength;
             return d.properties.continent;
         };
+
+
+        const colorScale2 = scaleSequential(d3.interpolateBlues)
+            .domain([1, 20]);
+
 
         const loadAndProcessData = () =>
             Promise.all([
@@ -185,10 +191,53 @@ export default {
                 textOffset: 15,
                 backgroundRectWidth: 240,
             });
+
+            drawHeatmapLegend()
             drawAllCountries(countries);
         });
 
         let countryNodes = [];
+
+        function drawHeatmapLegend() {
+            // Define gradient
+            const gradient = svg.append("defs")
+                .append("linearGradient")
+                .attr("id", "gradient")
+                .attr("x1", "0%")
+                .attr("x2", "0%")
+                .attr("y1", "0%")
+                .attr("y2", "100%");
+
+            // Define stops for the gradient based on the color scale
+            for (let i = 0; i <= 1; i += 0.1) {
+                gradient.append("stop")
+                    .attr("offset", `${i * 100}%`)
+                    .attr("stop-color", d3.interpolateBlues(i));
+            }
+
+            // Add rectangle with gradient fill
+            svg.append("rect")
+                .attr("x", 10)
+                .attr("y", 10)
+                .attr("width", 30)
+                .attr("height", 300)
+                .style("fill", "url(#gradient)")
+                .attr("transform", "translate(10, 500)")
+
+
+            const yAxisScale = d3.scaleLinear()
+                .domain([0, 20])
+                .range([300, 0]);  // Adjust the range to match the desired height of your axis
+
+            // Draw the vertical axis using the scaleLinear
+            const yAxis = d3.axisRight(yAxisScale)
+                .ticks(5); 
+
+            svg.append('g')
+                .attr('transform', 'translate(60, 510)')  // Position the axis; adjust as needed
+                .call(yAxis);
+
+        }
 
         function drawAllCountries(countries) {
             // draw all countries
@@ -197,7 +246,9 @@ export default {
                 .enter()
                 .append('path')
                 .attr('d', pathGenerator)
-                .attr('fill', (d) => colorScale(colorValue(d)))
+                //   .attr('fill', (d) => colorScale(colorValue(d)))
+                .attr('fill', d => colorScale2(d.properties.name.length))
+
                 .on('mouseover', handleMouseOver)
                 .on('mouseleave', handleMouseLeave)
                 .on('click', handleCountryClick)
@@ -232,8 +283,9 @@ export default {
 
             }
 
-
         }
+
+
 
         // Function to handle zooming
         function zoomed(event) {
