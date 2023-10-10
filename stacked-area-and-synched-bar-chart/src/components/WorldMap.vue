@@ -136,12 +136,27 @@ export default {
                     topoJSONdata.objects.countries
                 );
 
+                console.log(`${JSON.stringify(this.heatmapData)}`)
                 countries.features.forEach((d) => {
                     // add all country properties from the TSV file to the features of the countries
                     Object.assign(d.properties, rowById[d.id]);
                     const nameLength = parseInt(d.properties.name_len);
                     d.properties['nameLengthCategory'] =
                         nameLength < 6 ? 'Short' : 'Long' + ' ' + nameLength;
+
+                    // using the ISo2 country code (iso_a2), check heatmapData array for an object with the right COUnTRY property value  
+                    const countryCode = d.properties.iso_a2
+                    this.heatmapData.filter(h => h["Country"] == countryCode).forEach((c) => {
+                        // copy properties from c to d.properties
+                        for (let key in c) {
+                            if (key !== "Country") {
+                                d.properties[key] = c[key];
+                            }
+                        }
+                    })
+                    console.log(`${d.properties.iso_a2} ---  ${JSON.stringify(d.properties)}`)
+                    // todo - these properties are added in a not very efficient way
+                    // "Mitigation_Potential(GtCO2e)":"234","Mitigation_Cost($/GtCO2e)":"5","Mitigation_Potential(GtCO2e)_at_50":"234","Mitigation_Potential(GtCO2e)_at_100":"250","Mitigation_Potential(GtCO2e)_at_200":"300"}
                 });
 
                 return countries;
@@ -220,6 +235,10 @@ export default {
 
         loadAndProcessData().then((countries) => {
             countryDataSet = countries;
+// "Mitigation_Potential(GtCO2e)":"234","Mitigation_Cost($/GtCO2e)":"5","Mitigation_Potential(GtCO2e)_at_50":"234","Mitigation_Potential(GtCO2e)_at_100":"250","Mitigation_Potential(GtCO2e)_at_200":"300"}
+// now we can determine - depending on the toggle that indicates which category of these data properties should be used for the heatmap
+// the color scale - get min and max for the desired property from the heatmap data
+
 
             colorScale
                 .domain(countries.features.map(colorValue))
@@ -413,8 +432,8 @@ export default {
 
         function writeHTMLInLegend(htmlContent) {
             // Define the legend's dimensions and position
-            const legendWidth = 250;
-            const legendHeight = 150;
+            const legendWidth = 300;
+            const legendHeight = 180;
             const legendX = 1550;  // X position
             const legendY = 650;  // Y position
 
@@ -464,6 +483,9 @@ export default {
                 <li>Continent: ${d.properties.continent}</li>
                 <li>Economy: ${d.properties.economy}</li>
                 <li>Population: ${d.properties.pop_est}</li>
+<li>Mitigation_Potential(GtCO2e): ${d.properties["Mitigation_Potential(GtCO2e)"]}</li>
+
+
                 </ul>
         
             `);
