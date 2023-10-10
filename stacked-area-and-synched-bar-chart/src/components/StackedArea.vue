@@ -86,7 +86,9 @@ export default {
             // Create x and y scales
             xScale = d3
                 .scaleLinear()
-                .domain([d3.min(data, (d) => d.x), d3.max(data, (d) => d.x)])
+//                .domain([d3.min(data, (d) => d.x), d3.max(data, (d) => d.x)])
+                 // always have x scale start at zero, even if minimum value is larger than 0
+                .domain([0, d3.max(data, (d) => d.x)])
                 .range([0, width]);
 
             function xValueFromMouse(mouseX) {
