@@ -6,6 +6,7 @@ import WorldMap from './components/WorldMap.vue'
 
 const countries = ref([])
 const selectedTechnology = ref("")
+const selectedCountry = ref("")
 const isChecked = ref(true);
 countries.value.push("SG")
 
@@ -17,7 +18,10 @@ function handleBarClick(eventData) {
   console.log('Bar Clicked:', eventData);
   selectedTechnology.value = eventData.index.series
 }
-
+function handleCountryClick(eventData) {
+  console.log('Country Clicked:', eventData);
+  selectedCountry.value = eventData.index.name
+}
 
 const collaborationStore = useCollaborationStore();
 //TODO read from collaboration store which combinations of collaborating countries are even available - in addition to the fake data set
@@ -47,7 +51,8 @@ const collaborationStore = useCollaborationStore();
   </div>
   <div v-else="isChecked">
 
-    <WorldMap></WorldMap>
+    <WorldMap @country-clicked="handleCountryClick"></WorldMap>
+    Most recently selected country: {{ selectedCountry }}
   </div>
 </div>
 </template>

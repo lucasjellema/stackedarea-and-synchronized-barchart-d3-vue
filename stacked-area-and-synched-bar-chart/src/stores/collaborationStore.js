@@ -25,6 +25,9 @@ export const useCollaborationStore = defineStore({
     },
     data: (state) => {
       return state.dataSet;
+    }   ,
+    heatmapDataSet: (state) => {
+      return state.heatmapData;
     },
   },
   actions: {

@@ -10,6 +10,7 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson';
 import { geoAlbers, geoEquirectangular, geoEqualEarth } from 'd3-geo';
 import { scaleSequential } from 'd3-scale';
+import { useCollaborationStore } from '../stores/collaborationStore';
 
 
 
@@ -21,6 +22,21 @@ const countryDetailsBox = document.getElementById("country-details");
 
 export default {
     name: 'WorldMap',
+    setup(props, emit) {
+        const collaborationStore = useCollaborationStore();
+        const heatmapData = collaborationStore.heatmapDataSet
+        const emitCountryClicked = (countryRecord) => {
+            emit('country-clicked', countryRecord);
+        };
+
+        return { collaborationStore, heatmapData }
+    },
+
+    props: {
+        countries: Array
+    },
+    emits: ['country-clicked'],
+
     mounted() {
         const width = 1850,
             height = 950;
@@ -265,8 +281,9 @@ export default {
                 .ticks(5);
 
             svg.append('g')
-                .attr('transform', 'translate(60, 510)')  // Position the axis; adjust as needed
+                .attr('transform', 'translate(60, 510) scale(1)')  // Position the axis; adjust as needed
                 .call(yAxis);
+
 
         }
 
@@ -319,8 +336,9 @@ export default {
 
 
         // Function to handle zooming
+        // zooming applies to all paths in a specific group - that includes countries but not legend etc
         function zoomed(event) {
-            svg.selectAll("path")
+            g.selectAll("path")
                 .attr("transform", event.transform); // Apply the zoom transform to map elements
         }
         // Function to zoom to a specific country
