@@ -48,34 +48,38 @@ export default {
             .append('g')
             .attr('transform', `translate(40,310)`);
 
+        const heatmapLegendG = svg
+            .append('g')
+            .attr('transform', `translate(-10,470)`);
+
 
         // show a box with country details  
         const countryLegendG = svg
             .append('g')
             .attr('transform', `translate(1450,610)`);
 
-        const countryDetailsBackgroundRect = countryLegendG.selectAll('rect').data([null]);
+        // const countryDetailsBackgroundRect = countryLegendG.selectAll('rect').data([null]);
 
-        countryDetailsBackgroundRect
-            .enter()
-            .append('rect')
-            .merge(countryDetailsBackgroundRect)
-            .attr('x', -20 * 2)
-            .attr('y', -20 * 2)
-            .attr('rx', 20 * 2)
-            .attr('width', 400)
-            .attr('fill', '#eeffff')
-            .attr('height', 160)
-            .attr("display", "none")
-            .attr("id", "my-rectangle")
-            ;
+        // countryDetailsBackgroundRect
+        //     .enter()
+        //     .append('rect')
+        //     .merge(countryDetailsBackgroundRect)
+        //     .attr('x', -20 * 2)
+        //     .attr('y', -20 * 2)
+        //     .attr('rx', 20 * 2)
+        //     .attr('width', 400)
+        //     .attr('fill', '#eeffff')
+        //     .attr('height', 160)
+        //     .attr("display", "none")
+        //     .attr("id", "my-rectangle")
+        //     ;
 
-        countryDetailsBackgroundRect
-            .append('text')
-            .merge(countryDetailsBackgroundRect.select('text'))
-            .text("(d) => d")
-            .attr('dy', '0.32em')
-            .attr('x', 10)
+        // countryDetailsBackgroundRect
+        //     .append('text')
+        //     .merge(countryDetailsBackgroundRect.select('text'))
+        //     .text("(d) => d")
+        //     .attr('dy', '0.32em')
+        //     .attr('x', 10)
 
 
 
@@ -98,7 +102,7 @@ export default {
 
 
         const colorScale2 = scaleSequential(d3.interpolateBlues)
-            .domain([1, 20]);
+            .domain([1, 30]);
 
 
         const loadAndProcessData = () =>
@@ -175,6 +179,28 @@ export default {
         };
 
 
+        const heatmapLegend = (selection, props) => {
+            const {
+                spacing,
+                textOffset,
+                backgroundRectWidth,
+            } = props;
+
+            const backgroundRect = selection.selectAll('rect').data([null]);
+
+            backgroundRect
+                .enter()
+                .append('rect')
+                .merge(backgroundRect)
+                .attr('x', 10 * 2)
+                .attr('y', 10 * 2)
+                .attr('rx', 10 * 2)
+                .attr('width', backgroundRectWidth)
+                .attr('fill', 'white')
+                .attr('height', 350);
+
+        };
+
 
         loadAndProcessData().then((countries) => {
             countryDataSet = countries;
@@ -183,13 +209,18 @@ export default {
                 .domain(countries.features.map(colorValue))
                 .domain(colorScale.domain().sort().reverse())
                 .range(d3.schemeSpectral[colorScale.domain().length]);
-            // draw legend
-            colorLegendG.call(colorLegend, {
-                colorScale,
-                circleRadius: 8,
+            // // draw legend
+            // colorLegendG.call(colorLegend, {
+            //     colorScale,
+            //     circleRadius: 8,
+            //     spacing: 20,
+            //     textOffset: 15,
+            //     backgroundRectWidth: 240,
+            // });
+            heatmapLegendG.call(heatmapLegend, {
                 spacing: 20,
                 textOffset: 15,
-                backgroundRectWidth: 240,
+                backgroundRectWidth: 80,
             });
 
             drawHeatmapLegend()
@@ -205,8 +236,8 @@ export default {
                 .attr("id", "gradient")
                 .attr("x1", "0%")
                 .attr("x2", "0%")
-                .attr("y1", "0%")
-                .attr("y2", "100%");
+                .attr("y1", "100%")
+                .attr("y2", "0%");
 
             // Define stops for the gradient based on the color scale
             for (let i = 0; i <= 1; i += 0.1) {
@@ -226,12 +257,12 @@ export default {
 
 
             const yAxisScale = d3.scaleLinear()
-                .domain([0, 20])
+                .domain([0, 30])
                 .range([300, 0]);  // Adjust the range to match the desired height of your axis
 
             // Draw the vertical axis using the scaleLinear
             const yAxis = d3.axisRight(yAxisScale)
-                .ticks(5); 
+                .ticks(5);
 
             svg.append('g')
                 .attr('transform', 'translate(60, 510)')  // Position the axis; adjust as needed
