@@ -2,7 +2,9 @@
     <div id="mapcontainer"></div>
     <div id="country-details" class="hidden">
         <!-- Country details will be displayed here -->
+
     </div>
+    {{ propertyToDisplay }}
 </template>
     
 <script>
@@ -18,7 +20,7 @@ let svg, g, countryDataSet;
 
 const countryDetailsBox = document.getElementById("country-details");
 
-
+let thePropertyToDisplay
 
 export default {
     name: 'WorldMap',
@@ -28,8 +30,15 @@ export default {
         const emitCountryClicked = (countryRecord) => {
             emit('country-clicked', countryRecord);
         };
-const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
-        return { collaborationStore, heatmapData,propertyToDisplay }
+        //   const propertyToDisplay = ref('Mitigation_Potential(GtCO2e)')
+        const propertyToDisplay = ref('Mitigation_Cost($/GtCO2e)')
+        const x = propertyToDisplay.value
+        console.log(`setup prop ${propertyToDisplay.value}`)
+        watch(propertyToDisplay, (newValue) => {
+            console.log(`${newValue} new value for property`)
+        });
+
+        return { collaborationStore, heatmapData, propertyToDisplay }
     },
 
     props: {
@@ -38,9 +47,21 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
     emits: ['country-clicked'],
 
     mounted() {
+        console.log(`mounted prop heatmap ${this.heatmapData}`)
+        console.log(`mounted prop ${this.propertyToDisplay}`)
+        thePropertyToDisplay = ref(this.propertyToDisplay)
+        watch(thePropertyToDisplay, (newValue) => {
+            // WHAT SHOULD HAPPEN WHEN THE TOGGLEBOX IS UPDATED?
+            // redefine colorScale2
+            // redraw countries
+            // redefine color legend
+
+            console.log(`${newValue} new value for property`)
+        });
         const width = 1850,
             height = 950;
         const t0 = { k: width / 2 / Math.PI, x: width / 2, y: height / 2 };
+        const toggleBoxCoordinates = { x: -10, y: 170, height: 130, width: 250 }
         svg = d3
             .select('#mapcontainer')
             .append('svg')
@@ -68,37 +89,14 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
             .append('g')
             .attr('transform', `translate(-10,470)`);
 
-
-        // show a box with country details  
-        const countryLegendG = svg
+        const toggleBoxG = svg
             .append('g')
-            .attr('transform', `translate(1450,610)`);
+            .attr('transform', `translate(${toggleBoxCoordinates.x},${toggleBoxCoordinates.y})`);
 
-        // const countryDetailsBackgroundRect = countryLegendG.selectAll('rect').data([null]);
-
-        // countryDetailsBackgroundRect
-        //     .enter()
-        //     .append('rect')
-        //     .merge(countryDetailsBackgroundRect)
-        //     .attr('x', -20 * 2)
-        //     .attr('y', -20 * 2)
-        //     .attr('rx', 20 * 2)
-        //     .attr('width', 400)
-        //     .attr('fill', '#eeffff')
-        //     .attr('height', 160)
-        //     .attr("display", "none")
-        //     .attr("id", "my-rectangle")
-        //     ;
-
-        // countryDetailsBackgroundRect
-        //     .append('text')
-        //     .merge(countryDetailsBackgroundRect.select('text'))
-        //     .text("(d) => d")
-        //     .attr('dy', '0.32em')
-        //     .attr('x', 10)
-
-
-
+        // // show a box with country details  
+        // const countryLegendG = svg
+        //     .append('g')
+        //     .attr('transform', `translate(1450,610)`);
 
         g.append('path')
             .attr('class', 'sphere')
@@ -117,9 +115,33 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
         };
 
 
-        const colorScale2 = scaleSequential(d3.interpolateBlues)
-            .domain([1, 30]);
+        let colorScale2,yAxisScale
 
+
+        function findMinMax(collection, theProperty) {
+            const values = collection.map(item => item[theProperty]);
+            return {
+                min: Math.min(...values),
+                max: Math.max(...values)
+            };
+        }
+        function createColorScaleForHeatmapProperty(heatmapData, property) {
+            const result = findMinMax(heatmapData, property)
+            return scaleSequential(d3.interpolateBlues)
+                .domain([result.min, result.max]);
+        }
+        colorScale2 = createColorScaleForHeatmapProperty(this.heatmapData, thePropertyToDisplay.value)
+
+        
+        function createYAxisScaleForHeatmapProperty(heatmapData, property) {
+                const result = findMinMax(heatmapData, property)
+                return d3.scaleLinear()
+                    .domain([result.min, result.max])
+                    .range([300, 0]);  // Adjust the range to match the desired height of your axis 
+
+            }
+
+            yAxisScale = createYAxisScaleForHeatmapProperty(this.heatmapData, thePropertyToDisplay.value)
 
         const loadAndProcessData = () =>
             Promise.all([
@@ -136,7 +158,7 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
                     topoJSONdata.objects.countries
                 );
 
-                
+
                 countries.features.forEach((d) => {
                     // add all country properties from the TSV file to the features of the countries
                     Object.assign(d.properties, rowById[d.id]);
@@ -154,61 +176,13 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
                             }
                         }
                     })
-                    
+
                     // todo - these properties are added in a not very efficient way
                     // "Mitigation_Potential(GtCO2e)":"234","Mitigation_Cost($/GtCO2e)":"5","Mitigation_Potential(GtCO2e)_at_50":"234","Mitigation_Potential(GtCO2e)_at_100":"250","Mitigation_Potential(GtCO2e)_at_200":"300"}
                 });
 
                 return countries;
             });
-
-        // function to create colorLegend
-        const colorLegend = (selection, props) => {
-            const {
-                colorScale,
-                circleRadius,
-                spacing,
-                textOffset,
-                backgroundRectWidth,
-            } = props;
-
-            const backgroundRect = selection.selectAll('rect').data([null]);
-
-            const n = colorScale.domain().length;
-            backgroundRect
-                .enter()
-                .append('rect')
-                .merge(backgroundRect)
-                .attr('x', -circleRadius * 2)
-                .attr('y', -circleRadius * 2)
-                .attr('rx', circleRadius * 2)
-                .attr('width', backgroundRectWidth)
-                .attr('fill', 'white')
-                .attr('height', spacing * n + circleRadius * 2);
-
-            const groups = selection.selectAll('.tick').data(colorScale.domain());
-
-            const groupsEnter = groups.enter().append('g').attr('class', 'tick');
-            groupsEnter
-                .merge(groups)
-                .attr('transform', (d, i) => `translate(0, ${i * spacing})`);
-            groups.exit().remove();
-
-            groupsEnter
-                .append('circle')
-                .merge(groups.select('circle'))
-                .attr('r', circleRadius)
-                .attr('fill', colorScale);
-
-            groupsEnter
-                .append('text')
-                .merge(groups.select('text'))
-                .text((d) => d)
-                .attr('dy', '0.32em')
-                .attr('x', textOffset)
-                .on('click', programmaticallyAddCountry);
-        };
-
 
         const heatmapLegend = (selection, props) => {
             const {
@@ -232,6 +206,64 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
 
         };
 
+        const toggleBox = (selection, props) => {
+            const {
+                spacing,
+                textOffset,
+                backgroundRectWidth,
+            } = props;
+
+            const backgroundRect = selection.selectAll('rect').data([null]);
+
+            backgroundRect
+                .enter()
+                .append('rect')
+                .merge(backgroundRect)
+                .attr('x', 10 * 2)
+                .attr('y', 10 * 2)
+                .attr('rx', 10 * 2)
+                .attr('width', toggleBoxCoordinates.width)
+                .attr('fill', 'white')
+                .attr('height', toggleBoxCoordinates.height);
+
+            // Remove any existing foreignObject in the legend
+            svg.select(".togglebox-html").remove();
+
+            // Append the foreignObject to the SVG
+            const foreign = svg.append("foreignObject")
+                .attr("class", "togglebox-html")
+                .attr("x", toggleBoxCoordinates.x + 30)
+                .attr("y", toggleBoxCoordinates.y + 35)
+                .attr("width", toggleBoxCoordinates.width - 20)
+                .attr("height", toggleBoxCoordinates.height - 20);
+
+            const foDiv = foreign.append('xhtml:div')
+                .style("font-family", "Arial")
+                .style("font-size", "12px");
+
+            // Add radio buttons for five colors
+            const colors = ['Mitigation_Potential(GtCO2e)', 'Mitigation_Cost($/GtCO2e)', 'Mitigation_Potential(GtCO2e)_at_50', 'Mitigation_Potential(GtCO2e)_at_100', 'Mitigation_Potential(GtCO2e)_at_200'];
+            colors.forEach((color, i) => {
+                const input = foDiv.append('xhtml:input')
+                    .attr('type', 'radio')
+                    .attr('name', 'colorChoice')
+                    .attr('value', color)
+                    .attr('id', `color_${color}`)
+                    .on('change', function () {
+                        thePropertyToDisplay.value = this.value;
+
+                    });
+                if (color === thePropertyToDisplay.value) {
+                    input.attr('checked', true);
+                }
+
+                foDiv.append('xhtml:label')
+                    .attr('for', `color_${color}`)
+                    .text(color)
+                    .append('xhtml:br');
+            });
+
+        };
 
         loadAndProcessData().then((countries) => {
             countryDataSet = countries;
@@ -257,7 +289,11 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
                 textOffset: 15,
                 backgroundRectWidth: 100,
             });
-
+            toggleBoxG.call(toggleBox, {
+                spacing: 20,
+                textOffset: 15,
+                backgroundRectWidth: 200,
+            });
             drawHeatmapLegend()
             drawAllCountries(countries);
         });
@@ -291,15 +327,9 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
                 .attr("transform", "translate(0, 500)")
 
 
-            const yAxisScale = d3.scaleLinear()
-                .domain([0, 30])
-                .range([300, 0]);  // Adjust the range to match the desired height of your axis
-
             // Draw the vertical axis using the scaleLinear
             const yAxis = d3.axisRight(yAxisScale)
                 .ticks(5);
-
-
 
             svg.append('g')
                 .attr('transform', 'translate(75, 510) scale(1)')  // Position the axis; adjust as needed
@@ -311,7 +341,7 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
                 .attr("x", -640)  // Position it at the middle of the axis
                 .attr("dy", "1em")  // Adjustments for positioning
                 .style("text-anchor", "middle")  // Center the text
-                .text("Mitigation_Potential(GtCO2e)");
+                .text(thePropertyToDisplay.value);
 
         }
 
@@ -321,15 +351,14 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
             countryNodes
                 .enter()
                 .append('path')
-                .attr('d', pathGenerator)
-                //   .attr('fill', (d) => colorScale(colorValue(d)))
-                .attr('fill', d => colorScale2(d.properties.name.length))
-
+                .attr('d', pathGenerator)                
+                // fill with gray (#dcdcdc) when the country's data is unknown
+                .attr('fill', d => d.properties.hasOwnProperty(thePropertyToDisplay.value)?colorScale2(d.properties[thePropertyToDisplay.value]):'#dcdcdc')
                 .on('mouseover', handleMouseOver)
                 .on('mouseleave', handleMouseLeave)
                 .on('click', handleCountryClick)
                 .append('title')
-                .text((d) => d.properties.name + ' : ' + colorValue(d))
+                .text((d) => d.properties.name + ' : ' + d.properties.hasOwnProperty(thePropertyToDisplay.value)?d.properties[thePropertyToDisplay.value]+` ${thePropertyToDisplay.value}`:'')
                 .attr('class', 'country');
 
             zoooom = d3.zoom()
@@ -394,20 +423,6 @@ const propertyToDisplay = ref("Mitigation_Potential(GtCO2e)")
                 .duration(750)
                 .call(zoooom.transform, d3.zoomIdentity.translate(0, 0).scale(scale));
         }
-
-
-        // function zoomInOnCountry(d) {
-        //   let zoomFactor = 3;
-        //   // this makes the country fit in a box defined by width / zoomfactor. increase zoomfactor, box becomes smaller and scalefacor is smaller
-        //   // for small countries, the zoomfactor really should be much larger - otherwise too much zooming in
-        //   // note: when multiple countries are selected, the last one selected determines focus and zoom
-        //   fakeProjection.fitSize([width / zoomFactor, height / zoomFactor], d);
-        //   let k = fakeProjection.scale() / t0.k; // relative to initial scale.
-        //   let x = fakeProjection.translate()[0] - t0.x * k + 400; // relative to initial scale.
-        //   let y = fakeProjection.translate()[1] - t0.y * k + 300; // relative to initial scale.
-        //   svg.call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(k));
-        // }
-
 
         function getCountryNodes() {
             return g.selectAll('path').data(countryDataSet.features);
