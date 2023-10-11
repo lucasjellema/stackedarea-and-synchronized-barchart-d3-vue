@@ -456,9 +456,9 @@ export default {
 
         function writeHTMLInLegend(htmlContent) {
             // Define the legend's dimensions and position
-            const legendWidth = 300;
+            const legendWidth = 340;
             const legendHeight = 180;
-            const legendX = 1550;  // X position
+            const legendX = 1500;  // X position
             const legendY = 650;  // Y position
 
             // Select the SVG
@@ -504,12 +504,12 @@ export default {
 
             writeHTMLInLegend(`<strong>${d.properties.name_long}</strong><br/>
             <ul>
-                <li>Continent: ${d.properties.continent}</li>
-                <li>Economy: ${d.properties.economy}</li>
-                <li>Population: ${d.properties.pop_est}</li>
-<li>Mitigation_Potential(GtCO2e): ${d.properties["Mitigation_Potential(GtCO2e)"]}</li>
-
-
+                <li>Mitigation_Potential(GtCO2e): ${d.properties["Mitigation_Potential(GtCO2e)"]}</li>
+                <li>Mitigation_Cost($/GtCO2e): ${d.properties["Mitigation_Cost($/GtCO2e)"]}</li>
+                <hr/>
+                <li>Mitigation_Potential(GtCO2e) at 50: ${d.properties["Mitigation_Potential(GtCO2e)_at_50"]}</li>
+                <li>Mitigation_Potential(GtCO2e) at 100: ${d.properties["Mitigation_Potential(GtCO2e)_at_100"]}</li>
+                <li>Mitigation_Potential(GtCO2e) at 200: ${d.properties["Mitigation_Potential(GtCO2e)_at_200"]}</li>
                 </ul>
         
             `);
