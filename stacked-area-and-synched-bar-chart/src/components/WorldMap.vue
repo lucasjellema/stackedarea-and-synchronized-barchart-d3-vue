@@ -371,6 +371,13 @@ export default {
             // draw all countries
             countryNodes = g.selectAll('path').data(countries.features);
             countryNodes
+                // fill with gray (#dcdcdc) when the country's data is unknown
+                .attr('fill', d => d.properties.hasOwnProperty(thePropertyToDisplay.value) ? colorScale2(d.properties[thePropertyToDisplay.value]) : '#dcdcdc')
+                .select("title")  // Select the child title of each path
+                .text((d) => d.properties.name + ' : ' + (d.properties.hasOwnProperty(thePropertyToDisplay.value) ? d.properties[thePropertyToDisplay.value] + ` ${thePropertyToDisplay.value}` : ''))
+               
+
+            countryNodes
                 .enter()
                 .append('path')
                 .attr('d', pathGenerator)
@@ -380,7 +387,7 @@ export default {
                 .on('mouseleave', handleMouseLeave)
                 .on('click', handleCountryClick)
                 .append('title')
-                .text((d) => d.properties.name + ' : ' + d.properties.hasOwnProperty(thePropertyToDisplay.value) ? d.properties[thePropertyToDisplay.value] + ` ${thePropertyToDisplay.value}` : '')
+                .text((d) => d.properties.name + ' : ' + (d.properties.hasOwnProperty(thePropertyToDisplay.value) ? d.properties[thePropertyToDisplay.value] + ` ${thePropertyToDisplay.value}` : ''))
                 .attr('class', 'country');
 
             zoooom = d3.zoom()
