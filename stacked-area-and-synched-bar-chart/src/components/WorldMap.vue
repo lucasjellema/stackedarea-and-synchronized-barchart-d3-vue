@@ -78,7 +78,9 @@ export default {
 
 
         //const projection = d3.geoNaturalEarth1().translate([t0.x, t0.y]).scale(t0.k);
-        const projection = d3.geoEquirectangular().translate([t0.x, t0.y]).scale(t0.k);
+        const projection = d3.geoEquirectangular()
+        .rotate([-148, 0]) // rotate sets the spherical rotation angles. The default rotation is [0, 0], which centers the map on Greenwich (0° longitude). By adjusting the first value (longitude), you can center the map on a different region.
+        .translate([t0.x, t0.y]).scale(t0.k);
         //const projection = d3.geoAlbers().translate([t0.x, t0.y]).scale(t0.k);
 
 
