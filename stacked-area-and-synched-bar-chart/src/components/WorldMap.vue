@@ -56,7 +56,13 @@ export default {
             // redraw countries
             // redefine color legend
 
+            colorScale2 = createColorScaleForHeatmapProperty(this.heatmapData, thePropertyToDisplay.value)
+            yAxisScale = createYAxisScaleForHeatmapProperty(this.heatmapData, thePropertyToDisplay.value)
+
+            drawAllCountries(countryDataSet);
             console.log(`${newValue} new value for property`)
+            //drawHeatmapLegend()
+            drawVerticalAxis();
         });
         const width = 1850,
             height = 950;
@@ -115,7 +121,7 @@ export default {
         };
 
 
-        let colorScale2,yAxisScale
+        let colorScale2, yAxisScale
 
 
         function findMinMax(collection, theProperty) {
@@ -132,16 +138,16 @@ export default {
         }
         colorScale2 = createColorScaleForHeatmapProperty(this.heatmapData, thePropertyToDisplay.value)
 
-        
+
         function createYAxisScaleForHeatmapProperty(heatmapData, property) {
-                const result = findMinMax(heatmapData, property)
-                return d3.scaleLinear()
-                    .domain([result.min, result.max])
-                    .range([300, 0]);  // Adjust the range to match the desired height of your axis 
+            const result = findMinMax(heatmapData, property)
+            return d3.scaleLinear()
+                .domain([result.min, result.max])
+                .range([300, 0]);  // Adjust the range to match the desired height of your axis 
 
-            }
+        }
 
-            yAxisScale = createYAxisScaleForHeatmapProperty(this.heatmapData, thePropertyToDisplay.value)
+        yAxisScale = createYAxisScaleForHeatmapProperty(this.heatmapData, thePropertyToDisplay.value)
 
         const loadAndProcessData = () =>
             Promise.all([
@@ -301,6 +307,7 @@ export default {
         let countryNodes = [];
 
         function drawHeatmapLegend() {
+
             // Define gradient
             const gradient = svg.append("defs")
                 .append("linearGradient")
@@ -328,21 +335,36 @@ export default {
 
 
             // Draw the vertical axis using the scaleLinear
+            drawVerticalAxis();
+
+        }
+        function removeElementIfExists(id) {
+
+            const existing = svg.select(`#${id}`);
+            if (!existing.empty()) {
+                existing.remove();
+            }
+        }
+
+        function drawVerticalAxis() {
             const yAxis = d3.axisRight(yAxisScale)
                 .ticks(5);
 
+            removeElementIfExists("legend-axis")
+
             svg.append('g')
-                .attr('transform', 'translate(75, 510) scale(1)')  // Position the axis; adjust as needed
+                .attr("id", "legend-axis")
+                .attr('transform', 'translate(75, 510) scale(1)') // Position the axis; adjust as needed
                 .call(yAxis);
-
+            removeElementIfExists("legend-axis-title")
             svg.append("text")
-                .attr("transform", "rotate(-90)")  // Rotate the text for vertical axis
-                .attr("y", 10)  // Position it 40 pixels to the left of the axis
-                .attr("x", -640)  // Position it at the middle of the axis
-                .attr("dy", "1em")  // Adjustments for positioning
-                .style("text-anchor", "middle")  // Center the text
+                .attr("id", "legend-axis-title")
+                .attr("transform", "rotate(-90)") // Rotate the text for vertical axis
+                .attr("y", 10) // Position it 40 pixels to the left of the axis
+                .attr("x", -640) // Position it at the middle of the axis
+                .attr("dy", "1em") // Adjustments for positioning
+                .style("text-anchor", "middle") // Center the text
                 .text(thePropertyToDisplay.value);
-
         }
 
         function drawAllCountries(countries) {
@@ -351,14 +373,14 @@ export default {
             countryNodes
                 .enter()
                 .append('path')
-                .attr('d', pathGenerator)                
+                .attr('d', pathGenerator)
                 // fill with gray (#dcdcdc) when the country's data is unknown
-                .attr('fill', d => d.properties.hasOwnProperty(thePropertyToDisplay.value)?colorScale2(d.properties[thePropertyToDisplay.value]):'#dcdcdc')
+                .attr('fill', d => d.properties.hasOwnProperty(thePropertyToDisplay.value) ? colorScale2(d.properties[thePropertyToDisplay.value]) : '#dcdcdc')
                 .on('mouseover', handleMouseOver)
                 .on('mouseleave', handleMouseLeave)
                 .on('click', handleCountryClick)
                 .append('title')
-                .text((d) => d.properties.name + ' : ' + d.properties.hasOwnProperty(thePropertyToDisplay.value)?d.properties[thePropertyToDisplay.value]+` ${thePropertyToDisplay.value}`:'')
+                .text((d) => d.properties.name + ' : ' + d.properties.hasOwnProperty(thePropertyToDisplay.value) ? d.properties[thePropertyToDisplay.value] + ` ${thePropertyToDisplay.value}` : '')
                 .attr('class', 'country');
 
             zoooom = d3.zoom()
@@ -456,9 +478,9 @@ export default {
 
         function writeHTMLInLegend(htmlContent) {
             // Define the legend's dimensions and position
-            const legendWidth = 340;
+            const legendWidth = 370;
             const legendHeight = 180;
-            const legendX = 1500;  // X position
+            const legendX = 1450;  // X position
             const legendY = 650;  // Y position
 
             // Select the SVG
