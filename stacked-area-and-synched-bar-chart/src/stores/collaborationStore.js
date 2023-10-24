@@ -11,7 +11,8 @@ export const useCollaborationStore = defineStore({
     collaborationData: collabRecords,
     fakeDataSet: fakeRecords,
     heatmapData: heatmapRecords,
-    dataSet: []
+    dataSet: [],
+    collaborations: [], // an array that contains string arrays with country codes for collaborating countries. each entry looks like [countryA], [countryB], ... (with up to four countries)
   }),
   getters: {
     recordCount: (state) => {
@@ -41,8 +42,36 @@ export const useCollaborationStore = defineStore({
       else {
         this.dataSet = prepareCollaborationData(this.collaborationData, countries)
       }
-      console.log(`this data set ${this.dataSet}`)
-      // this is how you can add data in store's state this.myData = {prop:42}
+      this.collaborations = identifyAllCountryCollaborations(this.collaborationData)
+      console.log(`Collaborations: ${JSON.stringify(this.collaborations)}`)
+      console.log(`Collab candidates for ID: ${JSON.stringify(this.findCollaboratingCountries(['ID']))}`)
+      console.log(`Collab candidates for ID and SG: ${JSON.stringify(this.findCollaboratingCountries(['ID','SG']))}`)
+      console.log(`Collab candidates for ID and MM: ${JSON.stringify(this.findCollaboratingCountries(['ID','MM']))}`)
+
+    },
+    findCollaboratingCountries(collaboratingCountries) {
+      const result = [];
+      
+      for (const entry of this.collaborations) {
+        let match = true;
+        
+        for (const country of collaboratingCountries) {
+          if (!entry.includes(country)) {
+            match = false;
+            break;
+          }
+        }
+        
+        if (match) {
+          for (const string of entry) {
+            if (!result.includes(string) && !collaboratingCountries.includes(string)) {
+              result.push(string);
+            }
+          }
+        }
+      }
+      
+      return result;
     }
 
   },
@@ -51,6 +80,8 @@ export const useCollaborationStore = defineStore({
 function deriveCountryKey(countryArray) {
   return countryArray.sort().join('')
 }
+
+
 
 function prepareCollaborationData(raw, countries) {
   // format:
@@ -108,6 +139,17 @@ function prepareCollaborationData(raw, countries) {
   }
   prepareFakeData(data)
   return data
+}
+
+function identifyAllCountryCollaborations(raw) {
+  const collaborations = []
+
+  for (const rec of raw) {
+    const collaboratingCountries = [rec.country_1, rec.country_2, rec.country_3, rec.country_4]
+    const collabKey = deriveCountryKey(collaboratingCountries)
+    if (!collaborations.includes(collabKey)) collaborations.push(collabKey)
+  }
+  return collaborations.map(str => str.match(/.{1,2}/g) || []); // return an array of two letter string arrays
 }
 
 function prepareFakeData(data) {
