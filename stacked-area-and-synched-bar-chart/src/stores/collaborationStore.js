@@ -52,11 +52,11 @@ export const useCollaborationStore = defineStore({
     findCollaboratingCountries(collaboratingCountries) {
       const result = [];
       
-      for (const entry of this.collaborations) {
+      for (const entry of this.collaborations) { // loop over all combinations of country collaborations (possibly with duplicates)
         let match = true;
         
-        for (const country of collaboratingCountries) {
-          if (!entry.includes(country)) {
+        for (const country of collaboratingCountries) { // loop over countries in the current collaboration set; this set can be empty; in the latter case, all countries are candidate and can be selected
+          if (!entry.includes(country)) { 
             match = false;
             break;
           }
