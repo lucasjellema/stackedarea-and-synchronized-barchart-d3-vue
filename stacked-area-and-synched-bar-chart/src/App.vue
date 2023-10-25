@@ -8,6 +8,7 @@ const countries = ref([])
 const selectedTechnology = ref("")
 const selectedCountry = ref("")
 const isChecked = ref(true);
+const preSelectedCountries = ref(["ID","IN","ES"])
 countries.value.push("SG")
 
 function handleButtonClick(collboaratingCountries) {
@@ -51,7 +52,7 @@ const collaborationStore = useCollaborationStore();
   </div>
   <div v-else="isChecked">
 
-    <WorldMap @country-clicked="handleCountryClick"></WorldMap>
+    <WorldMap @country-clicked="handleCountryClick" :preSelectedCountries="preSelectedCountries"></WorldMap>
     Most recently selected country: {{ selectedCountry }}
   </div>
 </div>

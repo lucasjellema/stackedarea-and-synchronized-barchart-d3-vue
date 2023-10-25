@@ -5,6 +5,7 @@
 
     </div>
     {{ propertyToDisplay }}
+    <button @click="selectUSAHandler">select usa</button>
 </template>
     
 <script>
@@ -37,12 +38,12 @@ export default {
         watch(propertyToDisplay, (newValue) => {
             console.log(`${newValue} new value for property`)
         });
-
         return { collaborationStore, heatmapData, propertyToDisplay }
     },
 
     props: {
-        countries: Array
+        countries: Array,
+        preSelectedCountries: Array
     },
     emits: ['country-clicked'],
 
@@ -65,7 +66,7 @@ export default {
             drawVerticalAxis();
         });
         const width = 1850,
-            height = 950;
+            height = 1450;
         const t0 = { k: width / 2 / Math.PI, x: width / 2, y: height / 2 };
         const toggleBoxCoordinates = { x: -10, y: 170, height: 130, width: 250 }
         svg = d3
@@ -77,21 +78,18 @@ export default {
 
 
 
-        //const projection = d3.geoNaturalEarth1().translate([t0.x, t0.y]).scale(t0.k);
         const projection = d3.geoEquirectangular()
-        .rotate([-148, 0]) // rotate sets the spherical rotation angles. The default rotation is [0, 0], which centers the map on Greenwich (0° longitude). By adjusting the first value (longitude), you can center the map on a different region.
-        .translate([t0.x, t0.y]).scale(t0.k);
-        //const projection = d3.geoAlbers().translate([t0.x, t0.y]).scale(t0.k);
-
+            .rotate([-148, 0]) // rotate sets the spherical rotation angles. The default rotation is [0, 0], which centers the map on Greenwich (0° longitude). By adjusting the first value (longitude), you can center the map on a different region.
+            .translate([t0.x, t0.y]).scale(t0.k);
 
         const pathGenerator = d3.geoPath().projection(projection);
         let zoooom;
 
         g = svg.append('g');
 
-        const colorLegendG = svg
-            .append('g')
-            .attr('transform', `translate(40,310)`);
+        // const colorLegendG = svg
+        //     .append('g')
+        //     .attr('transform', `translate(40,310)`);
 
         const heatmapLegendG = svg
             .append('g')
@@ -109,19 +107,6 @@ export default {
         g.append('path')
             .attr('class', 'sphere')
             .attr('d', pathGenerator({ type: 'Sphere' }));
-
-
-        const colorScale = d3.scaleOrdinal();
-        //      const colorValue = (d) => d.properties.economy;
-        //      const colorValue = (d) => d.properties.continent ;
-        //      const colorValue = (d) => d.properties.income_grp ;
-        const colorValue = function (d) {
-            const nameLength = d.properties.name.length;
-            const nameLengthCategory =
-                nameLength < 6 ? 'Short' : 'Long' + ' ' + nameLength;
-            return d.properties.continent;
-        };
-
 
         let colorScale2, yAxisScale
 
@@ -170,9 +155,7 @@ export default {
                 countries.features.forEach((d) => {
                     // add all country properties from the TSV file to the features of the countries
                     Object.assign(d.properties, rowById[d.id]);
-                    const nameLength = parseInt(d.properties.name_len);
-                    d.properties['nameLengthCategory'] =
-                        nameLength < 6 ? 'Short' : 'Long' + ' ' + nameLength;
+
 
                     // using the ISo2 country code (iso_a2), check heatmapData array for an object with the right COUnTRY property value  
                     const countryCode = d.properties.iso_a2
@@ -280,18 +263,6 @@ export default {
             // the color scale - get min and max for the desired property from the heatmap data
 
 
-            colorScale
-                .domain(countries.features.map(colorValue))
-                .domain(colorScale.domain().sort().reverse())
-                .range(d3.schemeSpectral[colorScale.domain().length]);
-            // // draw legend
-            // colorLegendG.call(colorLegend, {
-            //     colorScale,
-            //     circleRadius: 8,
-            //     spacing: 20,
-            //     textOffset: 15,
-            //     backgroundRectWidth: 240,
-            // });
             heatmapLegendG.call(heatmapLegend, {
                 spacing: 20,
                 textOffset: 15,
@@ -304,9 +275,97 @@ export default {
             });
             drawHeatmapLegend()
             drawAllCountries(countries);
+            if (this.preSelectedCountries.length > 0) {
+                for (let i = 0; i < this.preSelectedCountries.length; i++) {
+                    selectedCountries.push(findIsoN3CountryCodeforIsoA2(this.preSelectedCountries[i]));
+                }
+            }
+            zoomInOnSelectedCountries()
+            // if (selectedCountries.length > 0) {
+            //     console.log(`after drawing all countries let 's mark  each and zoom in on the combination'`)
+
+            //     var minX = Number.POSITIVE_INFINITY;
+            //     var minY = Number.POSITIVE_INFINITY;
+            //     var maxX = Number.NEGATIVE_INFINITY;
+            //     var maxY = Number.NEGATIVE_INFINITY;
+            //     selectedCountries.forEach((c) => {
+            //         markSelectedCountry(c)
+            //         var selectedCountryGeoJSON = countryDataSet.features.filter((d) => d.id == c)
+
+            //         // Calculate zoom parameters
+            //         //                var bounds = d3.geoBounds(selectedCountryGeoJSON[0]);
+            //         const bounds = pathGenerator.bounds(selectedCountryGeoJSON[0]);
+            //         minX = Math.min(minX, bounds[0][0]);
+            //         minY = Math.min(minY, bounds[0][1]);
+            //         maxX = Math.max(maxX, bounds[1][0]);
+            //         maxY = Math.max(maxY, bounds[1][1]);
+            //     })
+
+
+            //     const dx = maxX - minX;
+            //         const dy = maxY - minY;
+            //         const x = (minX + maxX) / 2;
+            //         const y = (minY + maxY) / 2;
+            //         const scale = Math.max(1, Math.min(3, 0.9 / Math.max(dx / width, dy / height)));
+
+            //         // Transition to the selected feature's position and scale
+            //         svg.transition()
+            //             .duration(750)
+            //             .call(zoooom.transform, d3.zoomIdentity
+            //                 .translate(width / 2, height / 2)
+            //                 .scale(scale)
+            //                 .translate(-x, -y)
+            //             );
+
+
+            // }
+
+
         });
 
         let countryNodes = [];
+
+        function zoomInOnSelectedCountries() {
+            if (selectedCountries.length > 0) {
+                console.log(`after drawing all countries let 's mark  each and zoom in on the combination'`)
+
+                var minX = Number.POSITIVE_INFINITY;
+                var minY = Number.POSITIVE_INFINITY;
+                var maxX = Number.NEGATIVE_INFINITY;
+                var maxY = Number.NEGATIVE_INFINITY;
+                selectedCountries.forEach((c) => {
+                    markSelectedCountry(c)
+                    var selectedCountryGeoJSON = countryDataSet.features.filter((d) => d.id == c)
+
+                    // Calculate zoom parameters
+                    //                var bounds = d3.geoBounds(selectedCountryGeoJSON[0]);
+                    const bounds = pathGenerator.bounds(selectedCountryGeoJSON[0]);
+                    minX = Math.min(minX, bounds[0][0]);
+                    minY = Math.min(minY, bounds[0][1]);
+                    maxX = Math.max(maxX, bounds[1][0]);
+                    maxY = Math.max(maxY, bounds[1][1]);
+                })
+
+
+                const dx = maxX - minX;
+                const dy = maxY - minY;
+                const x = (minX + maxX) / 2;
+                const y = (minY + maxY) / 2;
+                const scale = Math.max(1, Math.min(3, 0.9 / Math.max(dx / width, dy / height)));
+
+                // Transition to the selected feature's position and scale
+                svg.transition()
+                    .duration(750)
+                    .call(zoooom.transform, d3.zoomIdentity
+                        .translate(width / 2, height / 2)
+                        .scale(scale)
+                        .translate(-x, -y)
+                    );
+
+
+            }
+
+        }
 
         function drawHeatmapLegend() {
 
@@ -377,7 +436,7 @@ export default {
                 .attr('fill', d => d.properties.hasOwnProperty(thePropertyToDisplay.value) ? colorScale2(d.properties[thePropertyToDisplay.value]) : '#dcdcdc')
                 .select("title")  // Select the child title of each path
                 .text((d) => d.properties.name + ' : ' + (d.properties.hasOwnProperty(thePropertyToDisplay.value) ? d.properties[thePropertyToDisplay.value] + ` ${thePropertyToDisplay.value}` : ''))
-               
+
 
             countryNodes
                 .enter()
@@ -399,15 +458,6 @@ export default {
             // Attach the zoom behavior to the SVG
             svg.call(zoooom);
 
-            // // Let the zoom take care of modifying the projection:
-            // // thanks to https://stackoverflow.com/questions/62228556/reactjs-d3-how-to-zoom-in-d3-geo-world-map
-            // zoom = d3.zoom()
-            //   .on("zoom", function () {
-            //     g.attr("transform", d3.zoomTransform(this))
-            //     countryNodes.style("stroke-width", 1 / d3.zoomTransform(this).k); // update stroke width.
-            //   })
-
-            // svg.call(zoom);
 
             function handleCountryClick(event, d) {
                 const countryPath = d3.select(this);
@@ -556,14 +606,8 @@ export default {
 
         // Function to toggle country selection
         function toggleCountrySelection(event, d, countryPath) {
-            //   const countryPath = d3.select(this);
             const countryCode = d.id;
-
-            // Check if Ctrl key is pressed
-            console.log(JSON.stringify(event));
             showCountryDetails(d)
-
-
             if (event.ctrlKey) {
                 // Toggle selection state
                 const isSelected = selectedCountries.includes(countryCode);
@@ -588,7 +632,10 @@ export default {
             if (selectedCountries.length == 0) {
                 zoomToScale(1)
                 hideCountryDetails()
+            } else {
+                zoomInOnSelectedCountries()
             }
+            console.log(`selected countries = ${JSON.stringify(selectedCountries)}`);
         }
 
         function programmaticallyAddCountry(event, d) {
@@ -597,25 +644,47 @@ export default {
 
         }
 
-        function selectCountry(iso3CountryCode) {
+        function selectUSAHandler() {
+            selectCountry('USA');
+
+        }
+
+        function findIsoN3CountryCodeforIsoA2(iso_a2CountryCode) {
+            const country = countryDataSet.features.filter(
+                (c) => c.properties['iso_a2'] == iso_a2CountryCode
+            );
+            // TODO handle no country was found (country is an empty array)
+            const iso_n3_countryCode = country[0].properties['iso_n3'];
+            return iso_n3_countryCode;
+        }
+
+        function selectCountry(iso_a3CountryCode) {
             // find iso_n3 for country in countryDataSet where iso_a3 ==  iso3CountryCode
             const country = countryDataSet.features.filter(
-                (c) => c.properties['iso_a3'] == iso3CountryCode
+                (c) => c.properties['iso_a3'] == iso_a3CountryCode
             );
-            const countryCode = country[0].properties['iso_n3'];
-            const isSelected = selectedCountries.includes(countryCode);
+            const iso_n3_countryCode = country[0].properties['iso_n3'];
+            const isSelected = selectedCountries.includes(iso_n3_countryCode);
             if (!isSelected) {
-                selectedCountries.push(countryCode);
+                selectedCountries.push(iso_n3_countryCode);
             }
             console.log(selectedCountries);
-            markSelectedCountry(countryCode);
+            markSelectedCountry(iso_n3_countryCode);
         }
 
     },
+    methods: {
+        selectUSAHandler(event) {
+            console.log('now???')
+            selectCountry('USA');
+        }
+    }
 };
 
 // Array to store selected countries
 const selectedCountries = [];
+
+
 </script>
     
 <style scoped>
