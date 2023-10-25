@@ -198,7 +198,7 @@ export default {
                 .attr('x', margin.left + 100)
                 .attr('y', height + 35) // Adjusted y position
                 .style('text-anchor', 'middle')
-                .text('Total Emissions Reductions (Mt CO2)');
+                .text('Total system Emissions (Mt CO2e)');
 
             svg
                 .append('g')
@@ -206,7 +206,7 @@ export default {
                 .append('text')
                 .attr('text-anchor', 'start')
                 .attr('transform', 'rotate(-90)')
-                .text('Capacity (GW) / Total System Cost (Billion $)');
+                .text('Total System Cost (Billion $)');
 
             // Create the vertical line
             // determine the X coord for the minimumX value
