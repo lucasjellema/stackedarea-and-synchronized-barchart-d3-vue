@@ -13,7 +13,6 @@ countries.value.push("SG")
 
 function handleButtonClick(collaboratingCountries) {
   countries.value = collaboratingCountries
-  preSelectedCountries.length=0
   preSelectedCountries.value = collaboratingCountries
 }
 
