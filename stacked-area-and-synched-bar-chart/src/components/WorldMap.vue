@@ -283,7 +283,9 @@ export default {
                 for (let i = 0; i < this.preSelectedCountries.length; i++) {
                     selectedCountries.push(findIsoN3CountryCodeforIsoA2(this.preSelectedCountries[i]));
                 }
+
             }
+            synchronizeCurrentCollaborationCandidatesWithCurrentlySelectedCountries()
             highlightCollaborationCandidates()
             zoomInOnSelectedCountries()
             // if (selectedCountries.length > 0) {
@@ -329,6 +331,7 @@ export default {
         });
 
         let countryNodes = [];
+
 
         function zoomInOnSelectedCountries() {
             if (selectedCountries.length > 0) {
@@ -525,23 +528,29 @@ export default {
                 .classed('selected-country', true);
         }
 
-        function highlightCollaborationCandidates() {
-            // unhighlight all currently highlighted collaboration candidates
-            getCountryNodes()                
-                .classed('collaboration-candidate', false);
-
-            // given the the currently selected countries in selectedCountries
-            // find the collaboration candidates and highlight each of them;
-            //- turn array of n3 country codes into array of a2 country codes
+        function synchronizeCurrentCollaborationCandidatesWithCurrentlySelectedCountries() {
             const currentlySelectedCountries = []
             selectedCountries.forEach((c) => { currentlySelectedCountries.push(countryN3toA2Map[c]) })
             // invoke function on store:  
             const collaborationCandidates = findCollaboratingCountries(currentlySelectedCountries)
             // for each country in function result, set class collaboration-candidate to true
+            collaborationCandidatesForSelectedCountries.length = 0;
+            collaborationCandidates.forEach((c) => { collaborationCandidatesForSelectedCountries.push(countryA2toN3Map[c]) })
+            console.log(`current collaboration candidates ${JSON.stringify(collaborationCandidatesForSelectedCountries)}`)
+        }
 
+        function highlightCollaborationCandidates() {
+            // unhighlight all currently highlighted collaboration candidates
             getCountryNodes()
-                .filter((d) => collaborationCandidates.includes(countryN3toA2Map[d.id]))
-                .classed('collaboration-candidate', true);
+                .classed('collaboration-candidate', false);
+
+            // given the the currently selected countries in selectedCountries
+            // find the collaboration candidates and highlight each of them;
+            if (selectedCountries.length > 0) {
+                getCountryNodes()
+                    .filter((d) => collaborationCandidatesForSelectedCountries.includes(d.id))
+                    .classed('collaboration-candidate', true);
+            }
         }
 
 
@@ -556,6 +565,8 @@ export default {
             // Add the hover effect on mouse over`
             // TODO but only for countries that can be selected
             if (!d.properties['in_heatmap']) return;
+            // QUESTION: if one or more countries are selected and this country is not a collaboration candidate, then it has no hover effect
+            // if (selectedCountries.length > 0 && !(collaborationCandidatesForSelectedCountries.includes(d.id))) return;
 
             d3.select(this).classed('hover-country', true);
         }
@@ -666,8 +677,9 @@ export default {
                 hideCountryDetails()
             } else {
                 zoomInOnSelectedCountries()
-                highlightCollaborationCandidates()
             }
+            synchronizeCurrentCollaborationCandidatesWithCurrentlySelectedCountries()
+            highlightCollaborationCandidates()
             console.log(`selected countries = ${JSON.stringify(selectedCountries)}`);
         }
 
@@ -716,6 +728,7 @@ export default {
 
 // Array to store selected countries
 const selectedCountries = [];
+const collaborationCandidatesForSelectedCountries = [];
 
 const countryN3toA2Map = {};
 const countryA2toN3Map = {};
