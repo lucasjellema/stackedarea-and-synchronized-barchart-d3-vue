@@ -5,7 +5,6 @@
 
     </div>
     {{ propertyToDisplay }}
-    <button @click="selectUSAHandler">select usa</button>
 </template>
     
 <script>
@@ -22,11 +21,12 @@ let svg, g, countryDataSet;
 const countryDetailsBox = document.getElementById("country-details");
 
 let thePropertyToDisplay
-
+let findCollaboratingCountries
 export default {
     name: 'WorldMap',
     setup(props, emit) {
         const collaborationStore = useCollaborationStore();
+        findCollaboratingCountries = collaborationStore.findCollaboratingCountries
         const heatmapData = collaborationStore.heatmapDataSet
         const emitCountryClicked = (countryRecord) => {
             emit('country-clicked', countryRecord);
@@ -65,8 +65,8 @@ export default {
             //drawHeatmapLegend()
             drawVerticalAxis();
         });
-        const width = 1850,
-            height = 1450;
+        const width = 1650,
+            height = 950;
         const t0 = { k: width / 2 / Math.PI, x: width / 2, y: height / 2 };
         const toggleBoxCoordinates = { x: -10, y: 170, height: 130, width: 250 }
         svg = d3
@@ -156,6 +156,8 @@ export default {
                     // add all country properties from the TSV file to the features of the countries
                     Object.assign(d.properties, rowById[d.id]);
 
+                    countryN3toA2Map[d.id] = d.properties.iso_a2
+                    countryA2toN3Map[d.properties.iso_a2] = d.id
 
                     // using the ISo2 country code (iso_a2), check heatmapData array for an object with the right COUnTRY property value  
                     const countryCode = d.properties.iso_a2
@@ -166,6 +168,8 @@ export default {
                                 d.properties[key] = c[key];
                             }
                         }
+                        // set the property in_heatmap to true to indicate that there is heatmap data for this country 
+                        d.properties['in_heatmap'] = true
                     })
 
                     // todo - these properties are added in a not very efficient way
@@ -280,6 +284,7 @@ export default {
                     selectedCountries.push(findIsoN3CountryCodeforIsoA2(this.preSelectedCountries[i]));
                 }
             }
+            highlightCollaborationCandidates()
             zoomInOnSelectedCountries()
             // if (selectedCountries.length > 0) {
             //     console.log(`after drawing all countries let 's mark  each and zoom in on the combination'`)
@@ -460,12 +465,16 @@ export default {
 
 
             function handleCountryClick(event, d) {
+                // TODO only respond to click if
+                // - the country is a collaboration candidate in case of already one or more country selected
+                // - the country is in the initial MVP dataset in case of no countries selected yet
+                if (!d.properties['in_heatmap']) return;
+
                 const countryPath = d3.select(this);
+
                 //zoomInOnCountry(d);
                 zoomToCountry(event, d)
                 toggleCountrySelection(event, d, countryPath)
-
-
 
             }
 
@@ -516,6 +525,26 @@ export default {
                 .classed('selected-country', true);
         }
 
+        function highlightCollaborationCandidates() {
+            // unhighlight all currently highlighted collaboration candidates
+            getCountryNodes()                
+                .classed('collaboration-candidate', false);
+
+            // given the the currently selected countries in selectedCountries
+            // find the collaboration candidates and highlight each of them;
+            //- turn array of n3 country codes into array of a2 country codes
+            const currentlySelectedCountries = []
+            selectedCountries.forEach((c) => { currentlySelectedCountries.push(countryN3toA2Map[c]) })
+            // invoke function on store:  
+            const collaborationCandidates = findCollaboratingCountries(currentlySelectedCountries)
+            // for each country in function result, set class collaboration-candidate to true
+
+            getCountryNodes()
+                .filter((d) => collaborationCandidates.includes(countryN3toA2Map[d.id]))
+                .classed('collaboration-candidate', true);
+        }
+
+
         function unmarkAllSelectedCountries() {
             //countryNodes = g.selectAll('path').data(countryDataSet.features);
             getCountryNodes()
@@ -524,7 +553,10 @@ export default {
         }
 
         function handleMouseOver(event, d) {
-            // Add the hover effect on mouse over
+            // Add the hover effect on mouse over`
+            // TODO but only for countries that can be selected
+            if (!d.properties['in_heatmap']) return;
+
             d3.select(this).classed('hover-country', true);
         }
 
@@ -634,6 +666,7 @@ export default {
                 hideCountryDetails()
             } else {
                 zoomInOnSelectedCountries()
+                highlightCollaborationCandidates()
             }
             console.log(`selected countries = ${JSON.stringify(selectedCountries)}`);
         }
@@ -684,6 +717,9 @@ export default {
 // Array to store selected countries
 const selectedCountries = [];
 
+const countryN3toA2Map = {};
+const countryA2toN3Map = {};
+
 
 </script>
     
@@ -709,6 +745,11 @@ const selectedCountries = [];
 /* Style for selected country */
 .selected-country {
     fill: purple;
+}
+
+.collaboration-candidate {
+    fill: orange;
+
 }
 
 .tick text {
