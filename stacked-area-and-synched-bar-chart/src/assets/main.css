@@ -55,6 +55,11 @@ a,
   fill: purple;
 }
 
+.collaboration-candidate {
+  fill: orange;
+}
+
+
 .tick text {
   font-size: 1em;
   font-family: sans-serif;
