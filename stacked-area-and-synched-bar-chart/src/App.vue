@@ -11,8 +11,9 @@ const isChecked = ref(true);
 const preSelectedCountries = ref(["ID","IN"])
 countries.value.push("SG")
 
-function handleButtonClick(collboaratingCountries) {
-  countries.value = collboaratingCountries
+function handleButtonClick(collaboratingCountries) {
+  countries.value = collaboratingCountries
+  preSelectedCountries.value = collaboratingCountries
 }
 
 function handleBarClick(eventData) {
@@ -32,14 +33,14 @@ const collaborationStore = useCollaborationStore();
   <div>
     <!-- Checkbox to toggle between components -->
     <input type="checkbox" v-model="isChecked"/>Show Area Chart or World Map
-
-
-  <div v-if="isChecked">
     <h1>Collaboration of Countries {{ countries }}</h1>
     <p>    <button @click="handleButtonClick(['ID', 'SG'])">Collaborate Indonesia and Singapore</button>
     <button @click="handleButtonClick(['ID'])">Just Indonesia</button>
     <button @click="handleButtonClick(['SG'])">Just Singapore</button>
   </p>
+
+  <div v-if="isChecked">
+
     <p>
     <button @click="handleButtonClick(['MM', 'PH'])">Collaborate Myanmar and Philipines (FAKE)</button>
     <button @click="handleButtonClick(['MM'])">Just Myanmar (FAKE)</button>
@@ -53,7 +54,7 @@ const collaborationStore = useCollaborationStore();
   <div v-else="isChecked">
 
     <WorldMap @country-clicked="handleCountryClick" :preSelectedCountries="preSelectedCountries"></WorldMap>
-    Most recently selected country: {{ selectedCountry }}
+    
   </div>
 </div>
 </template>

@@ -33,11 +33,12 @@ export default {
         };
         //   const propertyToDisplay = ref('Mitigation_Potential(GtCO2e)')
         const propertyToDisplay = ref('Mitigation_Cost($/GtCO2e)')
-        const x = propertyToDisplay.value
+        
         console.log(`setup prop ${propertyToDisplay.value}`)
         watch(propertyToDisplay, (newValue) => {
             console.log(`${newValue} new value for property`)
         });
+
         return { collaborationStore, heatmapData, propertyToDisplay }
     },
 
@@ -65,6 +66,21 @@ export default {
             //drawHeatmapLegend()
             drawVerticalAxis();
         });
+
+        // Watch for changes in the property preSelectedCountries coming from outside the component
+        watch(() => this.preSelectedCountries, (newValue, oldValue) => {
+            if (this.preSelectedCountries.length > 0) {
+                selectedCountries.length =0
+                for (let i = 0; i < this.preSelectedCountries.length; i++) {
+                    selectedCountries.push(findIsoN3CountryCodeforIsoA2(this.preSelectedCountries[i]));
+                }
+
+            }
+            synchronizeCurrentCollaborationCandidatesWithCurrentlySelectedCountries()
+            highlightCollaborationCandidates()
+            zoomInOnSelectedCountries()          
+        });
+
         const width = 1650,
             height = 950;
         const t0 = { k: width / 2 / Math.PI, x: width / 2, y: height / 2 };
