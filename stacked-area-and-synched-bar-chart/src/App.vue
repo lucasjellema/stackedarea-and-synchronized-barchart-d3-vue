@@ -8,7 +8,7 @@ const countries = ref([])
 const selectedTechnology = ref("")
 const selectedCountry = ref("")
 const isChecked = ref(true);
-const preSelectedCountries = ref(["ID","IN","ES"])
+const preSelectedCountries = ref(["ID","IN"])
 countries.value.push("SG")
 
 function handleButtonClick(collboaratingCountries) {
