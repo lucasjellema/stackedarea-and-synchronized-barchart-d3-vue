@@ -75,6 +75,7 @@ export default {
                     selectedCountries.push(findIsoN3CountryCodeforIsoA2(this.preSelectedCountries[i]));
                 }
             }
+            console.log(`selected countries ${JSON.stringify(selectedCountries)}`)
             // undo marking of previously selected countries
             unmarkAllSelectedCountries();
             synchronizeCurrentCollaborationCandidatesWithCurrentlySelectedCountries()
@@ -574,8 +575,7 @@ export default {
         function unmarkAllSelectedCountries() {
             //countryNodes = g.selectAll('path').data(countryDataSet.features);
             getCountryNodes()
-                .filter((d) => selectedCountries.includes(d.id))
-                .classed('selected-country', false);
+                                .classed('selected-country', false);
         }
 
         function handleMouseOver(event, d) {
