@@ -74,8 +74,9 @@ export default {
                 for (let i = 0; i < this.preSelectedCountries.length; i++) {
                     selectedCountries.push(findIsoN3CountryCodeforIsoA2(this.preSelectedCountries[i]));
                 }
-
             }
+            // undo marking of previously selected countries
+            unmarkAllSelectedCountries();
             synchronizeCurrentCollaborationCandidatesWithCurrentlySelectedCountries()
             highlightCollaborationCandidates()
             zoomInOnSelectedCountries()          
